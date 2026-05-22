@@ -59,6 +59,8 @@ export function AppSidebar({
   user,
   ...props
 }: React.ComponentProps<typeof Sidebar> & { user: SessionUser }) {
+  const [projectName, setProjectName] = React.useState("");
+
   return (
     <Dialog>
       <Sidebar collapsible="icon" {...props}>
@@ -112,6 +114,8 @@ export function AppSidebar({
               id="input-field-project-name"
               type="text"
               placeholder="My new project"
+              value={projectName}
+              onChange={(e) => setProjectName(e.target.value)}
             />
           </Field>
           <Field>
@@ -128,7 +132,7 @@ export function AppSidebar({
           </Field>
         </div>
         <DialogFooter>
-          <Button type="button">
+          <Button type="button" disabled={!projectName.trim()}>
             <HugeiconsIcon icon={PlusSignIcon} data-icon="inline-start" />
             Launch Environment
           </Button>

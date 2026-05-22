@@ -30,8 +30,14 @@ import {
 export function Auth({ className, ...props }: React.ComponentProps<"div">) {
   const [mode, setMode] = useState<"login" | "signup">("login");
 
-  const [loginState, loginAction, loginPending] = useActionState(signInWithEmail, null);
-  const [signupState, signupAction, signupPending] = useActionState(signUpWithEmail, null);
+  const [loginState, loginAction, loginPending] = useActionState(
+    signInWithEmail,
+    null,
+  );
+  const [signupState, signupAction, signupPending] = useActionState(
+    signUpWithEmail,
+    null,
+  );
 
   const state = mode === "login" ? loginState : signupState;
   const formAction = mode === "login" ? loginAction : signupAction;
@@ -116,14 +122,24 @@ export function Auth({ className, ...props }: React.ComponentProps<"div">) {
                       Forgot your password?
                     </a>
                   </div>
-                  <Input id="password" name="password" type="password" required />
+                  <Input
+                    id="password"
+                    name="password"
+                    type="password"
+                    required
+                  />
                 </Field>
               ) : (
                 <Field>
                   <Field className="grid grid-cols-2 gap-4">
                     <Field>
                       <FieldLabel htmlFor="password">Password</FieldLabel>
-                      <Input id="password" name="password" type="password" required />
+                      <Input
+                        id="password"
+                        name="password"
+                        type="password"
+                        required
+                      />
                     </Field>
                     <Field>
                       <FieldLabel htmlFor="confirm-password">

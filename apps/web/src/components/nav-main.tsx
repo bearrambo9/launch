@@ -1,10 +1,10 @@
 "use client";
-
 import {
   Collapsible,
   CollapsibleContent,
   CollapsibleTrigger,
 } from "@/components/ui/collapsible";
+import Link from "next/link";
 import {
   SidebarGroup,
   SidebarMenu,
@@ -14,7 +14,7 @@ import {
   SidebarMenuSubButton,
   SidebarMenuSubItem,
 } from "@/components/ui/sidebar";
-import { HugeiconsIcon } from "@hugeicons/react";
+import { HugeiconsIcon, IconSvgElement } from "@hugeicons/react";
 import { ArrowRight01Icon } from "@hugeicons/core-free-icons";
 
 export function NavMain({
@@ -23,7 +23,7 @@ export function NavMain({
   items: {
     title: string;
     url: string;
-    icon?: React.ReactNode;
+    icon?: IconSvgElement;
     isActive?: boolean;
     items?: {
       title: string;
@@ -45,7 +45,9 @@ export function NavMain({
               <SidebarMenuItem>
                 <CollapsibleTrigger asChild>
                   <SidebarMenuButton tooltip={item.title}>
-                    {item.icon}
+                    {item.icon && (
+                      <HugeiconsIcon icon={item.icon} strokeWidth={2} />
+                    )}
                     <span>{item.title}</span>
                     <HugeiconsIcon
                       icon={ArrowRight01Icon}
@@ -59,9 +61,9 @@ export function NavMain({
                     {item.items.map((subItem) => (
                       <SidebarMenuSubItem key={subItem.title}>
                         <SidebarMenuSubButton asChild>
-                          <a href={subItem.url}>
+                          <Link href={subItem.url}>
                             <span>{subItem.title}</span>
-                          </a>
+                          </Link>
                         </SidebarMenuSubButton>
                       </SidebarMenuSubItem>
                     ))}
@@ -76,10 +78,12 @@ export function NavMain({
                 tooltip={item.title}
                 isActive={item.isActive}
               >
-                <a href={item.url}>
-                  {item.icon}
+                <Link href={item.url}>
+                  {item.icon && (
+                    <HugeiconsIcon icon={item.icon} strokeWidth={2} />
+                  )}
                   <span>{item.title}</span>
-                </a>
+                </Link>
               </SidebarMenuButton>
             </SidebarMenuItem>
           ),

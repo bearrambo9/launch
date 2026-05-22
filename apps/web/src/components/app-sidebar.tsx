@@ -14,42 +14,38 @@ import {
 } from "@/components/ui/sidebar";
 import { HugeiconsIcon } from "@hugeicons/react";
 import {
-  RoboticIcon,
   RocketIcon,
   PlusSignIcon,
   GridViewIcon,
   HomeIcon,
   CompassIcon,
 } from "@hugeicons/core-free-icons";
+import { SessionUser } from "@/types/auth";
 
-const data = {
-  user: {
-    name: "user",
-    email: "u@example.com",
-    avatar: "/avatars/shadcn.jpg",
-  },
+export const data = {
   navMain: [
     {
       title: "Home",
-      url: "/",
-      icon: <HugeiconsIcon icon={HomeIcon} strokeWidth={2} />,
-      isActive: true,
+      url: "/dashboard/home",
+      icon: HomeIcon,
     },
     {
       title: "Projects",
-      url: "/projects",
-      icon: <HugeiconsIcon icon={GridViewIcon} strokeWidth={2} />,
-      isActive: true,
+      url: "/dashboard/projects",
+      icon: GridViewIcon,
     },
     {
       title: "Explore",
-      url: "/explore",
-      icon: <HugeiconsIcon icon={CompassIcon} strokeWidth={2} />,
+      url: "/dashboard/explore",
+      icon: CompassIcon,
     },
   ],
 };
 
-export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
+export function AppSidebar({
+  user,
+  ...props
+}: React.ComponentProps<typeof Sidebar> & { user: SessionUser }) {
   return (
     <Sidebar collapsible="icon" {...props}>
       <SidebarHeader>
@@ -78,7 +74,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
         <NavMain items={data.navMain} />
       </SidebarContent>
       <SidebarFooter>
-        <NavUser user={data.user} />
+        <NavUser user={user} />
       </SidebarFooter>
       <SidebarRail />
     </Sidebar>

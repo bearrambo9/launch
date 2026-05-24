@@ -17,3 +17,5 @@ I am also creating this project to take an opportunity to learn technologies I a
 # Choices
 
 - I decided to go with NextJS because I have my client and server in one codebase. This also saves me a lot of time not having to build out auth middleware and let's me focus on the main app.
+
+# Adding more to this README soon!

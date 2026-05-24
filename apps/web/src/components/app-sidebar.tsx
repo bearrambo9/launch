@@ -34,35 +34,52 @@ import { Input } from "./ui/input";
 import { Button } from "./ui/button";
 import { Field, FieldLabel } from "./ui/field";
 import { Switch } from "./ui/switch";
+import { validateProjectName } from "@/lib/project-validation";
+import { createProject } from "@/actions/projects";
 
 export const data = {
   navMain: [
-    {
-      title: "Home",
-      url: "/dashboard/home",
-      icon: HomeIcon,
-    },
-    {
-      title: "Projects",
-      url: "/dashboard/projects",
-      icon: GridViewIcon,
-    },
-    {
-      title: "Explore",
-      url: "/dashboard/explore",
-      icon: CompassIcon,
-    },
+    { title: "Home", url: "/dashboard/home", icon: HomeIcon },
+    { title: "Projects", url: "/dashboard/projects", icon: GridViewIcon },
+    { title: "Explore", url: "/dashboard/explore", icon: CompassIcon },
   ],
 };
+
+function slugify(value: string): string {
+  return value
+    .toLowerCase()
+    .replace(/\s+/g, "-")
+    .replace(/[^a-z0-9-]/g, "")
+    .replace(/-{2,}/g, "-");
+}
 
 export function AppSidebar({
   user,
   ...props
 }: React.ComponentProps<typeof Sidebar> & { user: SessionUser }) {
   const [projectName, setProjectName] = React.useState("");
+  const [isPublic, setIsPublic] = React.useState(true);
+  const [touched, setTouched] = React.useState(false);
+
+  const error = touched ? validateProjectName(projectName) : null;
+  const isValid =
+    projectName.length > 0 && validateProjectName(projectName) === null;
+
+  function handleNameChange(e: React.ChangeEvent<HTMLInputElement>) {
+    const slugified = slugify(e.target.value);
+    setProjectName(slugified);
+  }
+
+  function handleDialogOpenChange(open: boolean) {
+    if (!open) {
+      setProjectName("");
+      setIsPublic(false);
+      setTouched(false);
+    }
+  }
 
   return (
-    <Dialog>
+    <Dialog onOpenChange={handleDialogOpenChange}>
       <Sidebar collapsible="icon" {...props}>
         <SidebarHeader>
           <SidebarMenu>
@@ -99,6 +116,7 @@ export function AppSidebar({
         </SidebarFooter>
         <SidebarRail />
       </Sidebar>
+
       <DialogContent>
         <DialogHeader>
           <DialogTitle className="text-lg">Initialize project</DialogTitle>
@@ -107,21 +125,52 @@ export function AppSidebar({
             system and live terminal.
           </DialogDescription>
         </DialogHeader>
+
         <div className="flex flex-col justify-items-start gap-3">
           <Field>
-            <FieldLabel htmlFor="input-field-project-name">Title</FieldLabel>
+            <FieldLabel htmlFor="input-field-project-name">
+              Project name
+            </FieldLabel>
             <Input
               id="input-field-project-name"
               type="text"
-              placeholder="My new project"
+              placeholder="my-new-project"
               value={projectName}
-              onChange={(e) => setProjectName(e.target.value)}
+              onChange={handleNameChange}
+              onBlur={() => setTouched(true)}
+              aria-invalid={!!error}
+              aria-describedby={
+                error ? "project-name-error" : "project-name-hint"
+              }
+              className={
+                error ? "border-destructive focus-visible:ring-destructive" : ""
+              }
             />
+            {error ? (
+              <p
+                id="project-name-error"
+                className="text-destructive text-xs mt-1"
+              >
+                {error}
+              </p>
+            ) : (
+              <p
+                id="project-name-hint"
+                className="text-muted-foreground text-xs mt-1"
+              >
+                Lowercase letters, numbers, and hyphens only. 3-50 characters.
+              </p>
+            )}
           </Field>
+
           <Field>
             <FieldLabel>Privacy</FieldLabel>
             <div className="flex items-center gap-2">
-              <Switch id="switch-project-public" />
+              <Switch
+                id="switch-project-public"
+                checked={isPublic}
+                onCheckedChange={setIsPublic}
+              />
               <label
                 htmlFor="switch-project-public"
                 className="text-sm cursor-pointer"
@@ -131,8 +180,13 @@ export function AppSidebar({
             </div>
           </Field>
         </div>
+
         <DialogFooter>
-          <Button type="button" disabled={!projectName.trim()}>
+          <Button
+            type="button"
+            disabled={!isValid}
+            onClick={() => createProject(projectName, isPublic)}
+          >
             <HugeiconsIcon icon={PlusSignIcon} data-icon="inline-start" />
             Launch Environment
           </Button>

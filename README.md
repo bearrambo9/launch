@@ -7,15 +7,16 @@ When I first started my programming journey, 000webhost (A free PHP hosting webs
 I am also creating this project to take an opportunity to learn technologies I am unfamiliar with, such as:
 
 - Next JS
+- Monorepo
 - Docker
 - Prisma
 - Supabase
 - Typescript
-- Monorepo
 - Yjs
 
 # Choices
 
-- I decided to go with NextJS because I have my client and server in one codebase. This also saves me a lot of time not having to build out auth middleware and let's me focus on the main app.
+- **Next.js:** I went with Next.js because it allows me to keep my client UI and core server logic in a single codebase. This saves a massive amount of time by eliminating the need to build out a custom routing system from scratch and allowing me to implement authentication cleanly, letting me focus on building out the main application features.
+- **Monorepo Architecture:** I chose a monorepo workspace because the platform is split into two distinct services: the main web application and a separate service layer for managing user projects and Docker containers. I did this because managing containers is a resource intensive task, and separating the jobs ensures that a crash can never bring down the primary user dashboard.
 
 # Adding more to this README soon!

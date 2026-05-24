@@ -50,7 +50,8 @@ function slugify(value: string): string {
     .toLowerCase()
     .replace(/\s+/g, "-")
     .replace(/[^a-z0-9-]/g, "")
-    .replace(/-{2,}/g, "-");
+    .replace(/-{2,}/g, "-")
+    .replace(/^-+/, "");
 }
 
 export function AppSidebar({
@@ -66,10 +67,10 @@ export function AppSidebar({
     projectName.length > 0 && validateProjectName(projectName) === null;
 
   function handleNameChange(e: React.ChangeEvent<HTMLInputElement>) {
+    if (/^[\s-]/.test(e.target.value)) return;
     const slugified = slugify(e.target.value);
     setProjectName(slugified);
   }
-
   function handleDialogOpenChange(open: boolean) {
     if (!open) {
       setProjectName("");

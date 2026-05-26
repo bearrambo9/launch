@@ -5,7 +5,10 @@
   "main": "index.js",
   "scripts": {
     "dev:web": "pnpm --filter web dev",
-    "dev:api": "pnpm --filter api dev"
+    "dev:api": "pnpm --filter api dev",
+    "db:generate": "pnpm --filter @launch/db generate",
+    "db:migrate": "pnpm --filter @launch/db migrate:dev",
+    "db:push": "pnpm --filter @launch/db push"
   },
   "keywords": [],
   "author": "",

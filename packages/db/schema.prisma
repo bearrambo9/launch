@@ -2,9 +2,14 @@ datasource db {
   provider = "postgresql"
 }
 
-generator client {
+generator client_web {
   provider = "prisma-client-js"
-  output   = "src/generated/prisma"
+  output   = "../../apps/web/prisma/src/generated/prisma"
+}
+
+generator client_api {
+  provider = "prisma-client-js"
+  output   = "../../apps/api/src/generated/prisma"
 }
 
 model User {

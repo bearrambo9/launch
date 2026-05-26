@@ -2,14 +2,12 @@ import * as dotenv from "dotenv";
 import path from "path";
 import { defineConfig } from "prisma/config";
 
-dotenv.config({ path: path.resolve(__dirname, ".env.local") });
-
 dotenv.config({ path: path.resolve(__dirname, ".env") });
 
 export default defineConfig({
-  schema: "../../packages/db/schema.prisma",
+  schema: "schema.prisma",
   migrations: {
-    path: "../../packages/db/migrations",
+    path: "migrations",
   },
   datasource: {
     url: process.env["DATABASE_URL"],

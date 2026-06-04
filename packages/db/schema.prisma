@@ -12,26 +12,37 @@ generator client_api {
   output   = "../../apps/api/src/generated/prisma"
 }
 
+generator zod {
+  provider = "zod-prisma-types"
+}
+
 model User {
-  id            String    @id @default(cuid())
-  name          String?
+  id   String  @id @default(cuid())
+  name String?
+
+  /// @zod.string.email({ message: "Invalid email."})
   email         String    @unique
   emailVerified DateTime?
-  image         String?
-  password      String?
-  createdAt     DateTime  @default(now())
-  updatedAt     DateTime  @updatedAt
-  accounts      Account[]
-  sessions      Session[]
+
+  /// @zod.string.url({ message: "Invalid URL format." })
+  image     String?
+  password  String?
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  accounts  Account[]
+  sessions  Session[]
 
   ownedProjects  Project[]       @relation("OwnedProjects")
   projectMembers ProjectMember[]
 }
 
 model Project {
-  id        String   @id @default(cuid())
-  public    Boolean  @default(true)
-  name      String
+  id     String  @id @default(cuid())
+  public Boolean @default(true)
+
+  /// @zod.string.min(3, { message: "Project name too short." }).max(50, { message: "Project name too long."})
+  name String
+
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
   ownerId   String

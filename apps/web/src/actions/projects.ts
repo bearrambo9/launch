@@ -39,7 +39,7 @@ export async function createProject(name: string, isPublic: boolean) {
       "content-type": "application/json",
       authorization: `Bearer ${token}`,
     },
-    body: JSON.stringify({ name, public: isPublic }),
+    body: JSON.stringify({ name: name, isPublic: isPublic }),
   });
 
   const data = await res.json();

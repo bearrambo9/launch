@@ -1,5 +1,7 @@
 import { Router } from "express";
 import { authenticateToken } from "../middleware/auth.js";
+import { prisma } from "../lib/prisma.js";
+import { ProjectRole } from "../generated/prisma/index.js";
 
 const router: Router = Router();
 
@@ -11,10 +13,33 @@ router.get("/", (req, res) => {
   res.json({ msg: "Get all projects user has access to" });
 });
 
-router.post("/", (req, res) => {
-  console.log(req.user);
+router.post("/", async (req, res) => {
+  const { name, isPublic } = req.body;
 
-  res.json({ msg: "Create a project for the user" });
+  if (!name || typeof name !== "string" || typeof isPublic !== "boolean") {
+    return res
+      .status(400)
+      .json({ error: "Project name and publicity are required." });
+  }
+
+  try {
+    const project = await prisma.project.create({
+      data: {
+        name: name,
+        public: isPublic,
+        ownerId: req.user,
+        members: {
+          create: { userId: req.user, role: ProjectRole.OWNER },
+        },
+      },
+    });
+
+    console.log(project);
+
+    return res.json({ message: "testing" });
+  } catch (error) {
+    return res.status(500).json({ error: "Failed to create project." });
+  }
 });
 
 // Individual project routes

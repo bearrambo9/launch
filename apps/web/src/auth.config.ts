@@ -1,4 +1,10 @@
-import type { NextAuthConfig } from "next-auth";
+import type { NextAuthConfig, DefaultSession } from "next-auth";
+
+declare module "next-auth" {
+  interface Session {
+    user: { id: string } & DefaultSession["user"];
+  }
+}
 
 export const authConfig: NextAuthConfig = {
   pages: {
@@ -8,6 +14,12 @@ export const authConfig: NextAuthConfig = {
     strategy: "jwt",
   },
   callbacks: {
+    async session({ session, token }) {
+      if (token.sub && session.user) {
+        session.user.id = token.sub;
+      }
+      return session;
+    },
     authorized({ auth, request: { nextUrl } }) {
       const isLoggedIn = !!auth?.user;
       const isDashboard = nextUrl.pathname.startsWith("/dashboard");

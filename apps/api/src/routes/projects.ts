@@ -1,6 +1,9 @@
 import { Router } from "express";
+import { authenticateToken } from "../middleware/auth.js";
 
 const router: Router = Router();
+
+router.use(authenticateToken);
 
 // General project routes
 
@@ -9,6 +12,8 @@ router.get("/", (req, res) => {
 });
 
 router.post("/", (req, res) => {
+  console.log(req.user);
+
   res.json({ msg: "Create a project for the user" });
 });
 

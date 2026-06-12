@@ -16,7 +16,7 @@ router.get("/", (req, res) => {
 // Create project
 
 router.post("/", async (req, res) => {
-  const { name, isPublic } = req.body;
+  const { name, public: isPublic } = req.body;
 
   if (!name || typeof name !== "string" || typeof isPublic !== "boolean") {
     return res
@@ -27,7 +27,7 @@ router.post("/", async (req, res) => {
   try {
     const project = await prisma.project.create({
       data: {
-        name: name,
+        name,
         public: isPublic,
         ownerId: req.user,
         members: {
@@ -36,9 +36,7 @@ router.post("/", async (req, res) => {
       },
     });
 
-    console.log(project);
-
-    return res.json({ message: "testing" });
+    return res.status(201).json(project);
   } catch (error) {
     return res.status(500).json({ error: "Failed to create project." });
   }

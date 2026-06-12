@@ -3,6 +3,7 @@
 import { validateProjectName } from "@/lib/project-validation";
 import { auth } from "@/auth";
 import { SignJWT } from "jose";
+import { redirect } from "next/navigation";
 
 const INTERNAL_API_SECRET = process.env.INTERNAL_API_SECRET;
 const BACKEND_API_URL = process.env.BACKEND_API_URL || "http://localhost:3001";
@@ -39,12 +40,10 @@ export async function createProject(name: string, isPublic: boolean) {
       "content-type": "application/json",
       authorization: `Bearer ${token}`,
     },
-    body: JSON.stringify({ name: name, isPublic: isPublic }),
+    body: JSON.stringify({ name, public: isPublic }),
   });
 
   const data = await res.json();
 
-  console.log(data);
-
-  return data;
+  redirect(`/projects/${data.id}`);
 }

@@ -36,6 +36,7 @@ import { Field, FieldLabel } from "./ui/field";
 import { Switch } from "./ui/switch";
 import { validateProjectName } from "@/lib/project-validation";
 import { createProject } from "@/actions/projects";
+import { toast } from "sonner";
 
 export const data = {
   navMain: [
@@ -61,6 +62,7 @@ export function AppSidebar({
   const [projectName, setProjectName] = React.useState("");
   const [isPublic, setIsPublic] = React.useState(true);
   const [touched, setTouched] = React.useState(false);
+  const [isPending, startTransition] = React.useTransition();
 
   const error = touched ? validateProjectName(projectName) : null;
   const isValid =
@@ -185,8 +187,13 @@ export function AppSidebar({
         <DialogFooter>
           <Button
             type="button"
-            disabled={!isValid}
-            onClick={() => createProject(projectName, isPublic)}
+            disabled={!isValid || isPending}
+            onClick={() =>
+              startTransition(async () => {
+                const result = await createProject(projectName, isPublic);
+                if (result?.error) toast.error(result.error);
+              })
+            }
           >
             <HugeiconsIcon icon={PlusSignIcon} data-icon="inline-start" />
             Launch Environment

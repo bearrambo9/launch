@@ -14,7 +14,7 @@ export const TransactionIsolationLevelSchema = z.enum(['ReadUncommitted','ReadCo
 
 export const UserScalarFieldEnumSchema = z.enum(['id','name','email','emailVerified','image','password','createdAt','updatedAt']);
 
-export const ProjectScalarFieldEnumSchema = z.enum(['id','public','name','createdAt','updatedAt','ownerId']);
+export const ProjectScalarFieldEnumSchema = z.enum(['id','public','name','createdAt','updatedAt','ownerId','containerId','containerState']);
 
 export const ProjectMemberScalarFieldEnumSchema = z.enum(['id','projectId','userId','role','createdAt']);
 
@@ -29,6 +29,10 @@ export const SortOrderSchema = z.enum(['asc','desc']);
 export const QueryModeSchema = z.enum(['default','insensitive']);
 
 export const NullsOrderSchema = z.enum(['first','last']);
+
+export const ContainerStateSchema = z.enum(['NONE','RUNNING','STOPPED']);
+
+export type ContainerStateType = `${z.infer<typeof ContainerStateSchema>}`
 
 export const ProjectRoleSchema = z.enum(['OWNER','EDITOR','VIEWER']);
 
@@ -60,12 +64,14 @@ export type User = z.infer<typeof UserSchema>
 /////////////////////////////////////////
 
 export const ProjectSchema = z.object({
+  containerState: ContainerStateSchema,
   id: z.cuid(),
   public: z.boolean(),
   name: z.string().min(3, { message: "Project name too short." }).max(50, { message: "Project name too long."}),
   createdAt: z.coerce.date(),
   updatedAt: z.coerce.date(),
   ownerId: z.string(),
+  containerId: z.string().nullable(),
 })
 
 export type Project = z.infer<typeof ProjectSchema>
@@ -210,6 +216,8 @@ export const ProjectSelectSchema: z.ZodType<Prisma.ProjectSelect> = z.object({
   createdAt: z.boolean().optional(),
   updatedAt: z.boolean().optional(),
   ownerId: z.boolean().optional(),
+  containerId: z.boolean().optional(),
+  containerState: z.boolean().optional(),
   owner: z.union([z.boolean(),z.lazy(() => UserArgsSchema)]).optional(),
   members: z.union([z.boolean(),z.lazy(() => ProjectMemberFindManyArgsSchema)]).optional(),
   _count: z.union([z.boolean(),z.lazy(() => ProjectCountOutputTypeArgsSchema)]).optional(),
@@ -405,6 +413,8 @@ export const ProjectWhereInputSchema: z.ZodType<Prisma.ProjectWhereInput> = z.st
   createdAt: z.union([ z.lazy(() => DateTimeFilterSchema), z.coerce.date() ]).optional(),
   updatedAt: z.union([ z.lazy(() => DateTimeFilterSchema), z.coerce.date() ]).optional(),
   ownerId: z.union([ z.lazy(() => StringFilterSchema), z.string() ]).optional(),
+  containerId: z.union([ z.lazy(() => StringNullableFilterSchema), z.string() ]).optional().nullable(),
+  containerState: z.union([ z.lazy(() => EnumContainerStateFilterSchema), z.lazy(() => ContainerStateSchema) ]).optional(),
   owner: z.union([ z.lazy(() => UserScalarRelationFilterSchema), z.lazy(() => UserWhereInputSchema) ]).optional(),
   members: z.lazy(() => ProjectMemberListRelationFilterSchema).optional(),
 });
@@ -416,6 +426,8 @@ export const ProjectOrderByWithRelationInputSchema: z.ZodType<Prisma.ProjectOrde
   createdAt: z.lazy(() => SortOrderSchema).optional(),
   updatedAt: z.lazy(() => SortOrderSchema).optional(),
   ownerId: z.lazy(() => SortOrderSchema).optional(),
+  containerId: z.union([ z.lazy(() => SortOrderSchema), z.lazy(() => SortOrderInputSchema) ]).optional(),
+  containerState: z.lazy(() => SortOrderSchema).optional(),
   owner: z.lazy(() => UserOrderByWithRelationInputSchema).optional(),
   members: z.lazy(() => ProjectMemberOrderByRelationAggregateInputSchema).optional(),
 });
@@ -433,6 +445,8 @@ export const ProjectWhereUniqueInputSchema: z.ZodType<Prisma.ProjectWhereUniqueI
   createdAt: z.union([ z.lazy(() => DateTimeFilterSchema), z.coerce.date() ]).optional(),
   updatedAt: z.union([ z.lazy(() => DateTimeFilterSchema), z.coerce.date() ]).optional(),
   ownerId: z.union([ z.lazy(() => StringFilterSchema), z.string() ]).optional(),
+  containerId: z.union([ z.lazy(() => StringNullableFilterSchema), z.string() ]).optional().nullable(),
+  containerState: z.union([ z.lazy(() => EnumContainerStateFilterSchema), z.lazy(() => ContainerStateSchema) ]).optional(),
   owner: z.union([ z.lazy(() => UserScalarRelationFilterSchema), z.lazy(() => UserWhereInputSchema) ]).optional(),
   members: z.lazy(() => ProjectMemberListRelationFilterSchema).optional(),
 }));
@@ -444,6 +458,8 @@ export const ProjectOrderByWithAggregationInputSchema: z.ZodType<Prisma.ProjectO
   createdAt: z.lazy(() => SortOrderSchema).optional(),
   updatedAt: z.lazy(() => SortOrderSchema).optional(),
   ownerId: z.lazy(() => SortOrderSchema).optional(),
+  containerId: z.union([ z.lazy(() => SortOrderSchema), z.lazy(() => SortOrderInputSchema) ]).optional(),
+  containerState: z.lazy(() => SortOrderSchema).optional(),
   _count: z.lazy(() => ProjectCountOrderByAggregateInputSchema).optional(),
   _max: z.lazy(() => ProjectMaxOrderByAggregateInputSchema).optional(),
   _min: z.lazy(() => ProjectMinOrderByAggregateInputSchema).optional(),
@@ -459,6 +475,8 @@ export const ProjectScalarWhereWithAggregatesInputSchema: z.ZodType<Prisma.Proje
   createdAt: z.union([ z.lazy(() => DateTimeWithAggregatesFilterSchema), z.coerce.date() ]).optional(),
   updatedAt: z.union([ z.lazy(() => DateTimeWithAggregatesFilterSchema), z.coerce.date() ]).optional(),
   ownerId: z.union([ z.lazy(() => StringWithAggregatesFilterSchema), z.string() ]).optional(),
+  containerId: z.union([ z.lazy(() => StringNullableWithAggregatesFilterSchema), z.string() ]).optional().nullable(),
+  containerState: z.union([ z.lazy(() => EnumContainerStateWithAggregatesFilterSchema), z.lazy(() => ContainerStateSchema) ]).optional(),
 });
 
 export const ProjectMemberWhereInputSchema: z.ZodType<Prisma.ProjectMemberWhereInput> = z.strictObject({
@@ -864,6 +882,8 @@ export const ProjectCreateInputSchema: z.ZodType<Prisma.ProjectCreateInput> = z.
   name: z.string().min(3, { message: "Project name too short." }).max(50, { message: "Project name too long."}),
   createdAt: z.coerce.date().optional(),
   updatedAt: z.coerce.date().optional(),
+  containerId: z.string().optional().nullable(),
+  containerState: z.lazy(() => ContainerStateSchema).optional(),
   owner: z.lazy(() => UserCreateNestedOneWithoutOwnedProjectsInputSchema),
   members: z.lazy(() => ProjectMemberCreateNestedManyWithoutProjectInputSchema).optional(),
 });
@@ -875,6 +895,8 @@ export const ProjectUncheckedCreateInputSchema: z.ZodType<Prisma.ProjectUnchecke
   createdAt: z.coerce.date().optional(),
   updatedAt: z.coerce.date().optional(),
   ownerId: z.string(),
+  containerId: z.string().optional().nullable(),
+  containerState: z.lazy(() => ContainerStateSchema).optional(),
   members: z.lazy(() => ProjectMemberUncheckedCreateNestedManyWithoutProjectInputSchema).optional(),
 });
 
@@ -884,6 +906,8 @@ export const ProjectUpdateInputSchema: z.ZodType<Prisma.ProjectUpdateInput> = z.
   name: z.union([ z.string().min(3, { message: "Project name too short." }).max(50, { message: "Project name too long."}),z.lazy(() => StringFieldUpdateOperationsInputSchema) ]).optional(),
   createdAt: z.union([ z.coerce.date(),z.lazy(() => DateTimeFieldUpdateOperationsInputSchema) ]).optional(),
   updatedAt: z.union([ z.coerce.date(),z.lazy(() => DateTimeFieldUpdateOperationsInputSchema) ]).optional(),
+  containerId: z.union([ z.string(),z.lazy(() => NullableStringFieldUpdateOperationsInputSchema) ]).optional().nullable(),
+  containerState: z.union([ z.lazy(() => ContainerStateSchema), z.lazy(() => EnumContainerStateFieldUpdateOperationsInputSchema) ]).optional(),
   owner: z.lazy(() => UserUpdateOneRequiredWithoutOwnedProjectsNestedInputSchema).optional(),
   members: z.lazy(() => ProjectMemberUpdateManyWithoutProjectNestedInputSchema).optional(),
 });
@@ -895,6 +919,8 @@ export const ProjectUncheckedUpdateInputSchema: z.ZodType<Prisma.ProjectUnchecke
   createdAt: z.union([ z.coerce.date(),z.lazy(() => DateTimeFieldUpdateOperationsInputSchema) ]).optional(),
   updatedAt: z.union([ z.coerce.date(),z.lazy(() => DateTimeFieldUpdateOperationsInputSchema) ]).optional(),
   ownerId: z.union([ z.string(),z.lazy(() => StringFieldUpdateOperationsInputSchema) ]).optional(),
+  containerId: z.union([ z.string(),z.lazy(() => NullableStringFieldUpdateOperationsInputSchema) ]).optional().nullable(),
+  containerState: z.union([ z.lazy(() => ContainerStateSchema), z.lazy(() => EnumContainerStateFieldUpdateOperationsInputSchema) ]).optional(),
   members: z.lazy(() => ProjectMemberUncheckedUpdateManyWithoutProjectNestedInputSchema).optional(),
 });
 
@@ -905,6 +931,8 @@ export const ProjectCreateManyInputSchema: z.ZodType<Prisma.ProjectCreateManyInp
   createdAt: z.coerce.date().optional(),
   updatedAt: z.coerce.date().optional(),
   ownerId: z.string(),
+  containerId: z.string().optional().nullable(),
+  containerState: z.lazy(() => ContainerStateSchema).optional(),
 });
 
 export const ProjectUpdateManyMutationInputSchema: z.ZodType<Prisma.ProjectUpdateManyMutationInput> = z.strictObject({
@@ -913,6 +941,8 @@ export const ProjectUpdateManyMutationInputSchema: z.ZodType<Prisma.ProjectUpdat
   name: z.union([ z.string().min(3, { message: "Project name too short." }).max(50, { message: "Project name too long."}),z.lazy(() => StringFieldUpdateOperationsInputSchema) ]).optional(),
   createdAt: z.union([ z.coerce.date(),z.lazy(() => DateTimeFieldUpdateOperationsInputSchema) ]).optional(),
   updatedAt: z.union([ z.coerce.date(),z.lazy(() => DateTimeFieldUpdateOperationsInputSchema) ]).optional(),
+  containerId: z.union([ z.string(),z.lazy(() => NullableStringFieldUpdateOperationsInputSchema) ]).optional().nullable(),
+  containerState: z.union([ z.lazy(() => ContainerStateSchema), z.lazy(() => EnumContainerStateFieldUpdateOperationsInputSchema) ]).optional(),
 });
 
 export const ProjectUncheckedUpdateManyInputSchema: z.ZodType<Prisma.ProjectUncheckedUpdateManyInput> = z.strictObject({
@@ -922,6 +952,8 @@ export const ProjectUncheckedUpdateManyInputSchema: z.ZodType<Prisma.ProjectUnch
   createdAt: z.union([ z.coerce.date(),z.lazy(() => DateTimeFieldUpdateOperationsInputSchema) ]).optional(),
   updatedAt: z.union([ z.coerce.date(),z.lazy(() => DateTimeFieldUpdateOperationsInputSchema) ]).optional(),
   ownerId: z.union([ z.string(),z.lazy(() => StringFieldUpdateOperationsInputSchema) ]).optional(),
+  containerId: z.union([ z.string(),z.lazy(() => NullableStringFieldUpdateOperationsInputSchema) ]).optional().nullable(),
+  containerState: z.union([ z.lazy(() => ContainerStateSchema), z.lazy(() => EnumContainerStateFieldUpdateOperationsInputSchema) ]).optional(),
 });
 
 export const ProjectMemberCreateInputSchema: z.ZodType<Prisma.ProjectMemberCreateInput> = z.strictObject({
@@ -1399,6 +1431,13 @@ export const BoolFilterSchema: z.ZodType<Prisma.BoolFilter> = z.strictObject({
   not: z.union([ z.boolean(),z.lazy(() => NestedBoolFilterSchema) ]).optional(),
 });
 
+export const EnumContainerStateFilterSchema: z.ZodType<Prisma.EnumContainerStateFilter> = z.strictObject({
+  equals: z.lazy(() => ContainerStateSchema).optional(),
+  in: z.lazy(() => ContainerStateSchema).array().optional(),
+  notIn: z.lazy(() => ContainerStateSchema).array().optional(),
+  not: z.union([ z.lazy(() => ContainerStateSchema), z.lazy(() => NestedEnumContainerStateFilterSchema) ]).optional(),
+});
+
 export const UserScalarRelationFilterSchema: z.ZodType<Prisma.UserScalarRelationFilter> = z.strictObject({
   is: z.lazy(() => UserWhereInputSchema).optional(),
   isNot: z.lazy(() => UserWhereInputSchema).optional(),
@@ -1411,6 +1450,8 @@ export const ProjectCountOrderByAggregateInputSchema: z.ZodType<Prisma.ProjectCo
   createdAt: z.lazy(() => SortOrderSchema).optional(),
   updatedAt: z.lazy(() => SortOrderSchema).optional(),
   ownerId: z.lazy(() => SortOrderSchema).optional(),
+  containerId: z.lazy(() => SortOrderSchema).optional(),
+  containerState: z.lazy(() => SortOrderSchema).optional(),
 });
 
 export const ProjectMaxOrderByAggregateInputSchema: z.ZodType<Prisma.ProjectMaxOrderByAggregateInput> = z.strictObject({
@@ -1420,6 +1461,8 @@ export const ProjectMaxOrderByAggregateInputSchema: z.ZodType<Prisma.ProjectMaxO
   createdAt: z.lazy(() => SortOrderSchema).optional(),
   updatedAt: z.lazy(() => SortOrderSchema).optional(),
   ownerId: z.lazy(() => SortOrderSchema).optional(),
+  containerId: z.lazy(() => SortOrderSchema).optional(),
+  containerState: z.lazy(() => SortOrderSchema).optional(),
 });
 
 export const ProjectMinOrderByAggregateInputSchema: z.ZodType<Prisma.ProjectMinOrderByAggregateInput> = z.strictObject({
@@ -1429,6 +1472,8 @@ export const ProjectMinOrderByAggregateInputSchema: z.ZodType<Prisma.ProjectMinO
   createdAt: z.lazy(() => SortOrderSchema).optional(),
   updatedAt: z.lazy(() => SortOrderSchema).optional(),
   ownerId: z.lazy(() => SortOrderSchema).optional(),
+  containerId: z.lazy(() => SortOrderSchema).optional(),
+  containerState: z.lazy(() => SortOrderSchema).optional(),
 });
 
 export const BoolWithAggregatesFilterSchema: z.ZodType<Prisma.BoolWithAggregatesFilter> = z.strictObject({
@@ -1437,6 +1482,16 @@ export const BoolWithAggregatesFilterSchema: z.ZodType<Prisma.BoolWithAggregates
   _count: z.lazy(() => NestedIntFilterSchema).optional(),
   _min: z.lazy(() => NestedBoolFilterSchema).optional(),
   _max: z.lazy(() => NestedBoolFilterSchema).optional(),
+});
+
+export const EnumContainerStateWithAggregatesFilterSchema: z.ZodType<Prisma.EnumContainerStateWithAggregatesFilter> = z.strictObject({
+  equals: z.lazy(() => ContainerStateSchema).optional(),
+  in: z.lazy(() => ContainerStateSchema).array().optional(),
+  notIn: z.lazy(() => ContainerStateSchema).array().optional(),
+  not: z.union([ z.lazy(() => ContainerStateSchema), z.lazy(() => NestedEnumContainerStateWithAggregatesFilterSchema) ]).optional(),
+  _count: z.lazy(() => NestedIntFilterSchema).optional(),
+  _min: z.lazy(() => NestedEnumContainerStateFilterSchema).optional(),
+  _max: z.lazy(() => NestedEnumContainerStateFilterSchema).optional(),
 });
 
 export const EnumProjectRoleFilterSchema: z.ZodType<Prisma.EnumProjectRoleFilter> = z.strictObject({
@@ -1839,6 +1894,10 @@ export const BoolFieldUpdateOperationsInputSchema: z.ZodType<Prisma.BoolFieldUpd
   set: z.boolean().optional(),
 });
 
+export const EnumContainerStateFieldUpdateOperationsInputSchema: z.ZodType<Prisma.EnumContainerStateFieldUpdateOperationsInput> = z.strictObject({
+  set: z.lazy(() => ContainerStateSchema).optional(),
+});
+
 export const UserUpdateOneRequiredWithoutOwnedProjectsNestedInputSchema: z.ZodType<Prisma.UserUpdateOneRequiredWithoutOwnedProjectsNestedInput> = z.strictObject({
   create: z.union([ z.lazy(() => UserCreateWithoutOwnedProjectsInputSchema), z.lazy(() => UserUncheckedCreateWithoutOwnedProjectsInputSchema) ]).optional(),
   connectOrCreate: z.lazy(() => UserCreateOrConnectWithoutOwnedProjectsInputSchema).optional(),
@@ -2082,12 +2141,29 @@ export const NestedBoolFilterSchema: z.ZodType<Prisma.NestedBoolFilter> = z.stri
   not: z.union([ z.boolean(),z.lazy(() => NestedBoolFilterSchema) ]).optional(),
 });
 
+export const NestedEnumContainerStateFilterSchema: z.ZodType<Prisma.NestedEnumContainerStateFilter> = z.strictObject({
+  equals: z.lazy(() => ContainerStateSchema).optional(),
+  in: z.lazy(() => ContainerStateSchema).array().optional(),
+  notIn: z.lazy(() => ContainerStateSchema).array().optional(),
+  not: z.union([ z.lazy(() => ContainerStateSchema), z.lazy(() => NestedEnumContainerStateFilterSchema) ]).optional(),
+});
+
 export const NestedBoolWithAggregatesFilterSchema: z.ZodType<Prisma.NestedBoolWithAggregatesFilter> = z.strictObject({
   equals: z.boolean().optional(),
   not: z.union([ z.boolean(),z.lazy(() => NestedBoolWithAggregatesFilterSchema) ]).optional(),
   _count: z.lazy(() => NestedIntFilterSchema).optional(),
   _min: z.lazy(() => NestedBoolFilterSchema).optional(),
   _max: z.lazy(() => NestedBoolFilterSchema).optional(),
+});
+
+export const NestedEnumContainerStateWithAggregatesFilterSchema: z.ZodType<Prisma.NestedEnumContainerStateWithAggregatesFilter> = z.strictObject({
+  equals: z.lazy(() => ContainerStateSchema).optional(),
+  in: z.lazy(() => ContainerStateSchema).array().optional(),
+  notIn: z.lazy(() => ContainerStateSchema).array().optional(),
+  not: z.union([ z.lazy(() => ContainerStateSchema), z.lazy(() => NestedEnumContainerStateWithAggregatesFilterSchema) ]).optional(),
+  _count: z.lazy(() => NestedIntFilterSchema).optional(),
+  _min: z.lazy(() => NestedEnumContainerStateFilterSchema).optional(),
+  _max: z.lazy(() => NestedEnumContainerStateFilterSchema).optional(),
 });
 
 export const NestedEnumProjectRoleFilterSchema: z.ZodType<Prisma.NestedEnumProjectRoleFilter> = z.strictObject({
@@ -2208,6 +2284,8 @@ export const ProjectCreateWithoutOwnerInputSchema: z.ZodType<Prisma.ProjectCreat
   name: z.string().min(3, { message: "Project name too short." }).max(50, { message: "Project name too long."}),
   createdAt: z.coerce.date().optional(),
   updatedAt: z.coerce.date().optional(),
+  containerId: z.string().optional().nullable(),
+  containerState: z.lazy(() => ContainerStateSchema).optional(),
   members: z.lazy(() => ProjectMemberCreateNestedManyWithoutProjectInputSchema).optional(),
 });
 
@@ -2217,6 +2295,8 @@ export const ProjectUncheckedCreateWithoutOwnerInputSchema: z.ZodType<Prisma.Pro
   name: z.string().min(3, { message: "Project name too short." }).max(50, { message: "Project name too long."}),
   createdAt: z.coerce.date().optional(),
   updatedAt: z.coerce.date().optional(),
+  containerId: z.string().optional().nullable(),
+  containerState: z.lazy(() => ContainerStateSchema).optional(),
   members: z.lazy(() => ProjectMemberUncheckedCreateNestedManyWithoutProjectInputSchema).optional(),
 });
 
@@ -2344,6 +2424,8 @@ export const ProjectScalarWhereInputSchema: z.ZodType<Prisma.ProjectScalarWhereI
   createdAt: z.union([ z.lazy(() => DateTimeFilterSchema), z.coerce.date() ]).optional(),
   updatedAt: z.union([ z.lazy(() => DateTimeFilterSchema), z.coerce.date() ]).optional(),
   ownerId: z.union([ z.lazy(() => StringFilterSchema), z.string() ]).optional(),
+  containerId: z.union([ z.lazy(() => StringNullableFilterSchema), z.string() ]).optional().nullable(),
+  containerState: z.union([ z.lazy(() => EnumContainerStateFilterSchema), z.lazy(() => ContainerStateSchema) ]).optional(),
 });
 
 export const ProjectMemberUpsertWithWhereUniqueWithoutUserInputSchema: z.ZodType<Prisma.ProjectMemberUpsertWithWhereUniqueWithoutUserInput> = z.strictObject({
@@ -2491,6 +2573,8 @@ export const ProjectCreateWithoutMembersInputSchema: z.ZodType<Prisma.ProjectCre
   name: z.string().min(3, { message: "Project name too short." }).max(50, { message: "Project name too long."}),
   createdAt: z.coerce.date().optional(),
   updatedAt: z.coerce.date().optional(),
+  containerId: z.string().optional().nullable(),
+  containerState: z.lazy(() => ContainerStateSchema).optional(),
   owner: z.lazy(() => UserCreateNestedOneWithoutOwnedProjectsInputSchema),
 });
 
@@ -2501,6 +2585,8 @@ export const ProjectUncheckedCreateWithoutMembersInputSchema: z.ZodType<Prisma.P
   createdAt: z.coerce.date().optional(),
   updatedAt: z.coerce.date().optional(),
   ownerId: z.string(),
+  containerId: z.string().optional().nullable(),
+  containerState: z.lazy(() => ContainerStateSchema).optional(),
 });
 
 export const ProjectCreateOrConnectWithoutMembersInputSchema: z.ZodType<Prisma.ProjectCreateOrConnectWithoutMembersInput> = z.strictObject({
@@ -2558,6 +2644,8 @@ export const ProjectUpdateWithoutMembersInputSchema: z.ZodType<Prisma.ProjectUpd
   name: z.union([ z.string().min(3, { message: "Project name too short." }).max(50, { message: "Project name too long."}),z.lazy(() => StringFieldUpdateOperationsInputSchema) ]).optional(),
   createdAt: z.union([ z.coerce.date(),z.lazy(() => DateTimeFieldUpdateOperationsInputSchema) ]).optional(),
   updatedAt: z.union([ z.coerce.date(),z.lazy(() => DateTimeFieldUpdateOperationsInputSchema) ]).optional(),
+  containerId: z.union([ z.string(),z.lazy(() => NullableStringFieldUpdateOperationsInputSchema) ]).optional().nullable(),
+  containerState: z.union([ z.lazy(() => ContainerStateSchema), z.lazy(() => EnumContainerStateFieldUpdateOperationsInputSchema) ]).optional(),
   owner: z.lazy(() => UserUpdateOneRequiredWithoutOwnedProjectsNestedInputSchema).optional(),
 });
 
@@ -2568,6 +2656,8 @@ export const ProjectUncheckedUpdateWithoutMembersInputSchema: z.ZodType<Prisma.P
   createdAt: z.union([ z.coerce.date(),z.lazy(() => DateTimeFieldUpdateOperationsInputSchema) ]).optional(),
   updatedAt: z.union([ z.coerce.date(),z.lazy(() => DateTimeFieldUpdateOperationsInputSchema) ]).optional(),
   ownerId: z.union([ z.string(),z.lazy(() => StringFieldUpdateOperationsInputSchema) ]).optional(),
+  containerId: z.union([ z.string(),z.lazy(() => NullableStringFieldUpdateOperationsInputSchema) ]).optional().nullable(),
+  containerState: z.union([ z.lazy(() => ContainerStateSchema), z.lazy(() => EnumContainerStateFieldUpdateOperationsInputSchema) ]).optional(),
 });
 
 export const UserUpsertWithoutProjectMembersInputSchema: z.ZodType<Prisma.UserUpsertWithoutProjectMembersInput> = z.strictObject({
@@ -2783,6 +2873,8 @@ export const ProjectCreateManyOwnerInputSchema: z.ZodType<Prisma.ProjectCreateMa
   name: z.string().min(3, { message: "Project name too short." }).max(50, { message: "Project name too long."}),
   createdAt: z.coerce.date().optional(),
   updatedAt: z.coerce.date().optional(),
+  containerId: z.string().optional().nullable(),
+  containerState: z.lazy(() => ContainerStateSchema).optional(),
 });
 
 export const ProjectMemberCreateManyUserInputSchema: z.ZodType<Prisma.ProjectMemberCreateManyUserInput> = z.strictObject({
@@ -2870,6 +2962,8 @@ export const ProjectUpdateWithoutOwnerInputSchema: z.ZodType<Prisma.ProjectUpdat
   name: z.union([ z.string().min(3, { message: "Project name too short." }).max(50, { message: "Project name too long."}),z.lazy(() => StringFieldUpdateOperationsInputSchema) ]).optional(),
   createdAt: z.union([ z.coerce.date(),z.lazy(() => DateTimeFieldUpdateOperationsInputSchema) ]).optional(),
   updatedAt: z.union([ z.coerce.date(),z.lazy(() => DateTimeFieldUpdateOperationsInputSchema) ]).optional(),
+  containerId: z.union([ z.string(),z.lazy(() => NullableStringFieldUpdateOperationsInputSchema) ]).optional().nullable(),
+  containerState: z.union([ z.lazy(() => ContainerStateSchema), z.lazy(() => EnumContainerStateFieldUpdateOperationsInputSchema) ]).optional(),
   members: z.lazy(() => ProjectMemberUpdateManyWithoutProjectNestedInputSchema).optional(),
 });
 
@@ -2879,6 +2973,8 @@ export const ProjectUncheckedUpdateWithoutOwnerInputSchema: z.ZodType<Prisma.Pro
   name: z.union([ z.string().min(3, { message: "Project name too short." }).max(50, { message: "Project name too long."}),z.lazy(() => StringFieldUpdateOperationsInputSchema) ]).optional(),
   createdAt: z.union([ z.coerce.date(),z.lazy(() => DateTimeFieldUpdateOperationsInputSchema) ]).optional(),
   updatedAt: z.union([ z.coerce.date(),z.lazy(() => DateTimeFieldUpdateOperationsInputSchema) ]).optional(),
+  containerId: z.union([ z.string(),z.lazy(() => NullableStringFieldUpdateOperationsInputSchema) ]).optional().nullable(),
+  containerState: z.union([ z.lazy(() => ContainerStateSchema), z.lazy(() => EnumContainerStateFieldUpdateOperationsInputSchema) ]).optional(),
   members: z.lazy(() => ProjectMemberUncheckedUpdateManyWithoutProjectNestedInputSchema).optional(),
 });
 
@@ -2888,6 +2984,8 @@ export const ProjectUncheckedUpdateManyWithoutOwnerInputSchema: z.ZodType<Prisma
   name: z.union([ z.string().min(3, { message: "Project name too short." }).max(50, { message: "Project name too long."}),z.lazy(() => StringFieldUpdateOperationsInputSchema) ]).optional(),
   createdAt: z.union([ z.coerce.date(),z.lazy(() => DateTimeFieldUpdateOperationsInputSchema) ]).optional(),
   updatedAt: z.union([ z.coerce.date(),z.lazy(() => DateTimeFieldUpdateOperationsInputSchema) ]).optional(),
+  containerId: z.union([ z.string(),z.lazy(() => NullableStringFieldUpdateOperationsInputSchema) ]).optional().nullable(),
+  containerState: z.union([ z.lazy(() => ContainerStateSchema), z.lazy(() => EnumContainerStateFieldUpdateOperationsInputSchema) ]).optional(),
 });
 
 export const ProjectMemberUpdateWithoutUserInputSchema: z.ZodType<Prisma.ProjectMemberUpdateWithoutUserInput> = z.strictObject({

@@ -36,6 +36,12 @@ model User {
   projectMembers ProjectMember[]
 }
 
+enum ContainerState {
+  NONE
+  RUNNING
+  STOPPED
+}
+
 model Project {
   id     String  @id @default(cuid())
   public Boolean @default(true)
@@ -48,6 +54,9 @@ model Project {
   ownerId   String
 
   owner User @relation("OwnedProjects", fields: [ownerId], references: [id])
+
+  containerId    String?
+  containerState ContainerState @default(NONE)
 
   members ProjectMember[]
 }

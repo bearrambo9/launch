@@ -7,11 +7,13 @@ const router: Router = Router();
 
 router.use(authenticateToken);
 
-// General project routes
+// Get user projects
 
 router.get("/", (req, res) => {
   res.json({ msg: "Get all projects user has access to" });
 });
+
+// Create project
 
 router.post("/", async (req, res) => {
   const { name, isPublic } = req.body;

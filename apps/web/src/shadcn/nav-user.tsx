@@ -19,13 +19,12 @@ import {
 import { HugeiconsIcon } from "@hugeicons/react";
 import {
   UnfoldMoreIcon,
-  SparklesIcon,
-  CheckmarkBadgeIcon,
   CreditCardIcon,
-  NotificationIcon,
   LogoutIcon,
+  SettingsIcon,
 } from "@hugeicons/core-free-icons";
 import { SessionUser } from "@/types/auth";
+import { signOut } from "next-auth/react";
 
 export function NavUser({ user }: { user: SessionUser }) {
   const { isMobile } = useSidebar();
@@ -41,7 +40,13 @@ export function NavUser({ user }: { user: SessionUser }) {
             >
               <Avatar className="h-8 w-8 rounded-lg">
                 <AvatarImage src={user.image} alt={user.name} />
-                <AvatarFallback className="rounded-lg">CN</AvatarFallback>
+                <AvatarFallback>
+                  {user.name
+                    .split(" ")
+                    .map((n) => n[0])
+                    .join("")
+                    .toUpperCase()}
+                </AvatarFallback>
               </Avatar>
               <div className="grid flex-1 text-left text-sm leading-tight">
                 <span className="truncate font-medium">{user.name}</span>
@@ -64,7 +69,13 @@ export function NavUser({ user }: { user: SessionUser }) {
               <div className="flex items-center gap-2 px-1 py-1.5 text-left text-sm">
                 <Avatar className="h-8 w-8 rounded-lg">
                   <AvatarImage src={user.image} alt={user.name} />
-                  <AvatarFallback className="rounded-lg">CN</AvatarFallback>
+                  <AvatarFallback>
+                    {user.name
+                      .split(" ")
+                      .map((n) => n[0])
+                      .join("")
+                      .toUpperCase()}
+                  </AvatarFallback>
                 </Avatar>
                 <div className="grid flex-1 text-left text-sm leading-tight">
                   <span className="truncate font-medium">{user.name}</span>
@@ -75,27 +86,20 @@ export function NavUser({ user }: { user: SessionUser }) {
             <DropdownMenuSeparator />
             <DropdownMenuGroup>
               <DropdownMenuItem>
-                <HugeiconsIcon icon={SparklesIcon} strokeWidth={2} />
-                Upgrade to Pro
-              </DropdownMenuItem>
-            </DropdownMenuGroup>
-            <DropdownMenuSeparator />
-            <DropdownMenuGroup>
-              <DropdownMenuItem>
-                <HugeiconsIcon icon={CheckmarkBadgeIcon} strokeWidth={2} />
-                Account
+                <HugeiconsIcon icon={SettingsIcon} strokeWidth={2} />
+                Settings
               </DropdownMenuItem>
               <DropdownMenuItem>
                 <HugeiconsIcon icon={CreditCardIcon} strokeWidth={2} />
                 Billing
               </DropdownMenuItem>
-              <DropdownMenuItem>
-                <HugeiconsIcon icon={NotificationIcon} strokeWidth={2} />
-                Notifications
-              </DropdownMenuItem>
             </DropdownMenuGroup>
             <DropdownMenuSeparator />
-            <DropdownMenuItem>
+            <DropdownMenuItem
+              onClick={() => {
+                signOut({ redirectTo: "/login" });
+              }}
+            >
               <HugeiconsIcon icon={LogoutIcon} strokeWidth={2} />
               Log out
             </DropdownMenuItem>

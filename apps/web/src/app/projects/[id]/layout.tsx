@@ -3,7 +3,7 @@ import { prisma } from "@/lib/prisma";
 import { notFound } from "next/navigation";
 import { SidebarProvider, SidebarInset } from "@/shadcn/ui/sidebar";
 import { SiteHeader } from "@/shadcn/site-header";
-import { AppSidebar } from "@/shadcn/app-sidebar";
+import { AppSidebar } from "@/shadcn/project-sidebar";
 import { SessionUser } from "@/types/auth";
 
 export default async function ProjectLayout({

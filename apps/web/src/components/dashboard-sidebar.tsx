@@ -1,7 +1,7 @@
 "use client";
 import * as React from "react";
 import { NavMain } from "@/components/nav-main";
-import { NavUser } from "@/components/nav-user";
+import { NavUser } from "@/shadcn/nav-user";
 import {
   Sidebar,
   SidebarContent,
@@ -11,7 +11,7 @@ import {
   SidebarMenuButton,
   SidebarMenuItem,
   SidebarRail,
-} from "@/components/ui/sidebar";
+} from "@/shadcn/ui/sidebar";
 import {
   Dialog,
   DialogContent,
@@ -20,7 +20,7 @@ import {
   DialogHeader,
   DialogTitle,
   DialogTrigger,
-} from "@/components/ui/dialog";
+} from "@/shadcn/ui/dialog";
 import { HugeiconsIcon } from "@hugeicons/react";
 import {
   RocketIcon,
@@ -31,10 +31,10 @@ import {
 } from "@hugeicons/core-free-icons";
 import { SiNodedotjs } from "@icons-pack/react-simple-icons";
 import { SessionUser } from "@/types/auth";
-import { Input } from "./ui/input";
-import { Button } from "./ui/button";
-import { Field, FieldLabel } from "./ui/field";
-import { Switch } from "./ui/switch";
+import { Input } from "@/shadcn/ui/input";
+import { Button } from "@/shadcn/ui/button";
+import { Field, FieldLabel } from "@/shadcn/ui/field";
+import { Switch } from "@/shadcn/ui/switch";
 import { validateProjectName } from "@/lib/project-validation";
 import { createProject } from "@/actions/projects";
 import { toast } from "sonner";

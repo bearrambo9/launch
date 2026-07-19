@@ -1,23 +1,23 @@
 "use client";
 import { useActionState, useState } from "react";
 import { cn } from "@/lib/utils";
-import { Button } from "@/components/ui/button";
+import { Button } from "@/shadcn/ui/button";
 import {
   Card,
   CardContent,
   CardDescription,
   CardHeader,
   CardTitle,
-} from "@/components/ui/card";
+} from "@/shadcn/ui/card";
 import {
   Field,
   FieldDescription,
   FieldGroup,
   FieldLabel,
   FieldSeparator,
-} from "@/components/ui/field";
-import { Alert, AlertDescription } from "@/components/ui/alert";
-import { Input } from "@/components/ui/input";
+} from "@/shadcn/ui/field";
+import { Alert, AlertDescription } from "@/shadcn/ui/alert";
+import { Input } from "@/shadcn/ui/input";
 import { HugeiconsIcon } from "@hugeicons/react";
 import { GithubIcon, GoogleIcon } from "@hugeicons/core-free-icons";
 import {

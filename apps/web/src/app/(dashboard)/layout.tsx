@@ -1,10 +1,10 @@
-import { AppSidebar } from "@/components/app-sidebar";
+import { AppSidebar } from "@/components/dashboard-sidebar";
 import { auth } from "@/auth";
 import {
   SidebarInset,
   SidebarProvider,
   SidebarTrigger,
-} from "@/components/ui/sidebar";
+} from "@/shadcn/ui/sidebar";
 import { SessionUser } from "@/types/auth";
 
 export default async function DashboardLayout({

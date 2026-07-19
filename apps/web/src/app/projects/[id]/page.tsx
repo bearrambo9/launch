@@ -17,5 +17,5 @@ export default async function ProjectPage({
 
   console.log(project);
 
-  return <div>{project.name}</div>;
+  return;
 }

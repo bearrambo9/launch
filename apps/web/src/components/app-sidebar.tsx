@@ -29,6 +29,7 @@ import {
   HomeIcon,
   CompassIcon,
 } from "@hugeicons/core-free-icons";
+import { SiNodedotjs } from "@icons-pack/react-simple-icons";
 import { SessionUser } from "@/types/auth";
 import { Input } from "./ui/input";
 import { Button } from "./ui/button";
@@ -46,6 +47,8 @@ export const data = {
   ],
 };
 
+const templates = [{ id: "NODE_LTS", name: "Node.js", Icon: SiNodedotjs }];
+
 function slugify(value: string): string {
   return value
     .toLowerCase()
@@ -62,6 +65,7 @@ export function AppSidebar({
   const [projectName, setProjectName] = React.useState("");
   const [isPublic, setIsPublic] = React.useState(true);
   const [touched, setTouched] = React.useState(false);
+  const [template, setTemplate] = React.useState<string | null>(null);
   const [isPending, startTransition] = React.useTransition();
 
   const error = touched ? validateProjectName(projectName) : null;
@@ -78,6 +82,7 @@ export function AppSidebar({
       setProjectName("");
       setIsPublic(false);
       setTouched(false);
+      setTemplate(null);
     }
   }
 
@@ -167,6 +172,28 @@ export function AppSidebar({
           </Field>
 
           <Field>
+            <FieldLabel>Templates</FieldLabel>
+            <div className="flex flex-wrap gap-1.5">
+              {templates.map((t) => (
+                <button
+                  key={t.id}
+                  type="button"
+                  onClick={() => setTemplate(t.id)}
+                  aria-pressed={template === t.id}
+                  title={t.name}
+                  className={`flex size-8 items-center justify-center rounded-md border border-input bg-transparent transition-colors focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 ${
+                    template === t.id
+                      ? "border-ring bg-accent"
+                      : "hover:bg-muted"
+                  }`}
+                >
+                  <t.Icon size={16} color="default" />
+                </button>
+              ))}
+            </div>
+          </Field>
+
+          <Field>
             <FieldLabel>Privacy</FieldLabel>
             <div className="flex items-center gap-2">
               <Switch
@@ -189,9 +216,15 @@ export function AppSidebar({
             type="button"
             disabled={!isValid || isPending}
             onClick={() =>
-              startTransition(async () => {
-                const result = await createProject(projectName, isPublic);
-                if (result?.error) toast.error(result.error);
+              startTransition(() => {
+                (async () => {
+                  const result = await createProject(
+                    projectName,
+                    isPublic,
+                    template,
+                  );
+                  if (result?.error) toast.error(result.error);
+                })();
               })
             }
           >

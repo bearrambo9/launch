@@ -1,11 +1,13 @@
 "use client";
 
+import Link from "next/link";
 import { Button } from "@/shadcn/ui/button";
 import { Separator } from "@/shadcn/ui/separator";
 import { useSidebar } from "@/shadcn/ui/sidebar";
 import { HugeiconsIcon } from "@hugeicons/react";
 import {
   SidebarLeftIcon,
+  ArrowLeft01Icon,
   PlayIcon,
   UserAdd01Icon,
   Settings01Icon,
@@ -24,6 +26,11 @@ export function SiteHeader({ projectName }: { projectName: string }) {
           onClick={toggleSidebar}
         >
           <HugeiconsIcon icon={SidebarLeftIcon} strokeWidth={2} />
+        </Button>
+        <Button className="h-8 w-8" variant="ghost" size="icon" asChild>
+          <Link href="/dashboard/projects">
+            <HugeiconsIcon icon={ArrowLeft01Icon} strokeWidth={2} />
+          </Link>
         </Button>
         <Separator
           orientation="vertical"

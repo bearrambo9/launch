@@ -8,18 +8,20 @@ import { redirect } from "next/navigation";
 const INTERNAL_API_SECRET = process.env.INTERNAL_API_SECRET;
 const BACKEND_API_URL = process.env.BACKEND_API_URL || "http://localhost:3001";
 
-export async function createProject(name: string, isPublic: boolean) {
+export async function createProject(
+  name: string,
+  isPublic: boolean,
+  language?: string | null,
+): Promise<{ error: string } | undefined> {
   const session = await auth();
 
   if (!session || !session.user) {
-    throw new Error("Unauthorized, please log in.");
+    return { error: "Unauthorized, please log in." };
   }
 
   const user = session.user;
-
   const error = validateProjectName(name);
-
-  if (error) throw new Error("Invalid project name");
+  if (error) return { error: "Invalid project name" };
 
   const secret = await new TextEncoder().encode(INTERNAL_API_SECRET);
 
@@ -27,7 +29,6 @@ export async function createProject(name: string, isPublic: boolean) {
     sub: "launch-frontend",
     iss: "launch-app",
     aud: "api-service-layer",
-
     uid: user.id,
   })
     .setProtectedHeader({ alg: "HS256" })
@@ -40,10 +41,17 @@ export async function createProject(name: string, isPublic: boolean) {
       "content-type": "application/json",
       authorization: `Bearer ${token}`,
     },
-    body: JSON.stringify({ name, public: isPublic }),
+    body: JSON.stringify({
+      name,
+      public: isPublic,
+      ...(language ? { language } : {}),
+    }),
   });
 
-  const data = await res.json();
+  if (!res.ok) {
+    return { error: "Failed to create project. Please try again." };
+  }
 
+  const data = await res.json();
   redirect(`/projects/${data.id}`);
 }

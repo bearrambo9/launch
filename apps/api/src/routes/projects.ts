@@ -16,7 +16,7 @@ router.get("/", (req, res) => {
 // Create project
 
 router.post("/", async (req, res) => {
-  const { name, public: isPublic } = req.body;
+  const { name, public: isPublic, template } = req.body;
 
   if (!name || typeof name !== "string" || typeof isPublic !== "boolean") {
     return res
@@ -29,6 +29,7 @@ router.post("/", async (req, res) => {
       data: {
         name,
         public: isPublic,
+        ...(template != null && { template }),
         ownerId: req.user,
         members: {
           create: { userId: req.user, role: ProjectRole.OWNER },

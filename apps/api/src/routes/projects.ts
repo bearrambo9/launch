@@ -2,10 +2,12 @@ import { Router } from "express";
 import { authenticateToken } from "../middleware/auth.js";
 import { prisma } from "../lib/prisma.js";
 import { ProjectRole } from "../generated/prisma/index.js";
+import containerRouter from "../routes/container.js";
 
 const router: Router = Router();
 
 router.use(authenticateToken);
+router.use("/:id/container", containerRouter);
 
 // Get user projects
 

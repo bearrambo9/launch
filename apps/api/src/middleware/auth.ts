@@ -13,6 +13,10 @@ export async function authenticateToken(
 ) {
   const authHeader = req.headers["authorization"];
 
+  if (req.method === "OPTIONS") {
+    return next();
+  }
+
   if (
     !authHeader ||
     typeof authHeader !== "string" ||

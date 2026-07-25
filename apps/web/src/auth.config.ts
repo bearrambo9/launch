@@ -3,6 +3,7 @@ import type { NextAuthConfig, DefaultSession } from "next-auth";
 declare module "next-auth" {
   interface Session {
     user: { id: string } & DefaultSession["user"];
+    accessToken?: string;
   }
 }
 
@@ -14,10 +15,17 @@ export const authConfig: NextAuthConfig = {
     strategy: "jwt",
   },
   callbacks: {
+    async jwt({ token, account }) {
+      if (account) {
+        token.accessToken = account.access_token;
+      }
+      return token;
+    },
     async session({ session, token }) {
       if (token.sub && session.user) {
         session.user.id = token.sub;
       }
+      session.accessToken = token.accessToken as string | undefined;
       return session;
     },
     authorized({ auth, request: { nextUrl } }) {

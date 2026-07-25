@@ -36,12 +36,6 @@ model User {
   projectMembers ProjectMember[]
 }
 
-enum ContainerState {
-  NONE
-  RUNNING
-  STOPPED
-}
-
 model Project {
   id     String  @id @default(cuid())
   public Boolean @default(true)
@@ -58,8 +52,7 @@ model Project {
   /// @zod.string.min(1)
   dockerImage String @default("launch-base:latest")
 
-  containerId    String?
-  containerState ContainerState @default(NONE)
+  containerId String?
 
   members ProjectMember[]
 }

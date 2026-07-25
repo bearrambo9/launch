@@ -1,48 +1,31 @@
-"use client";
+import { auth } from "@/auth";
+import { prisma } from "@/lib/prisma";
+import { notFound, redirect } from "next/navigation";
+import { SignJWT } from "jose";
+import Editor from "@/components/editor";
 
-import dynamic from "next/dynamic";
-import { HugeiconsIcon } from "@hugeicons/react";
-import { Cancel01Icon } from "@hugeicons/core-free-icons";
+export default async function ProjectPage({
+  params,
+}: {
+  params: Promise<{ id: string }>;
+}) {
+  const { id } = await params;
+  const session = await auth();
+  const project = await prisma.project.findUnique({ where: { id } });
 
-const MonacoEditor = dynamic(() => import("@monaco-editor/react"), {
-  ssr: false,
-});
+  if (!project) notFound();
 
-const openTabs = [{ name: "page.tsx", active: true }];
+  if (!session || !session.user) redirect("/login");
 
-export default function ProjectPage() {
-  return (
-    <div className="flex h-full w-full flex-col">
-      <div className="flex items-center border-b bg-muted/80">
-        {openTabs.map((tab) => (
-          <div
-            key={tab.name}
-            className={`flex items-center gap-2 border-r px-3 py-1 text-xs ${
-              tab.active
-                ? "bg-accent text-foreground"
-                : "text-muted-foreground hover:bg-muted"
-            }`}
-          >
-            <span>{tab.name}</span>
-            <HugeiconsIcon
-              icon={Cancel01Icon}
-              strokeWidth={2}
-              className="size-3 opacity-60"
-            />
-          </div>
-        ))}
-      </div>
-      <div className="flex items-center border-b bg-accent px-3 py-0.5">
-        <span className="text-xs text-muted-foreground">/file/placeholder</span>
-      </div>
-      <div className="flex-1">
-        <MonacoEditor
-          height="100%"
-          defaultLanguage="typescript"
-          defaultValue="// start typing"
-          theme="vs"
-        />
-      </div>
-    </div>
-  );
+  const secret = new TextEncoder().encode(process.env.INTERNAL_API_SECRET);
+  const token = await new SignJWT({
+    iss: "launch-app",
+    aud: "api-service-layer",
+    uid: session.user.id,
+  })
+    .setProtectedHeader({ alg: "HS256" })
+    .setExpirationTime("1h")
+    .sign(secret);
+
+  return <Editor accessToken={token} projectId={project.id} />;
 }

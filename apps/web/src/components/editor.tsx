@@ -17,13 +17,6 @@ type Tab = {
   active: boolean;
 };
 
-/* Testing tab
-{
-  name: "test.txt",
-  active: false,
-}
-*/
-
 export default function Editor({
   accessToken,
   projectId,

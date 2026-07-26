@@ -38,6 +38,7 @@ import { Switch } from "@/shadcn/ui/switch";
 import { validateProjectName } from "@/lib/project-validation";
 import { createProject } from "@/actions/projects";
 import { toast } from "sonner";
+import { useRouter } from "next/navigation";
 
 export const data = {
   navMain: [
@@ -67,6 +68,7 @@ export function AppSidebar({
   const [touched, setTouched] = React.useState(false);
   const [template, setTemplate] = React.useState<string | null>(null);
   const [isPending, startTransition] = React.useTransition();
+  const router = useRouter();
 
   const error = touched ? validateProjectName(projectName) : null;
   const isValid =
@@ -223,7 +225,12 @@ export function AppSidebar({
                     isPublic,
                     template,
                   );
-                  if (result?.error) toast.error(result.error);
+
+                  if ("redirectUrl" in result) {
+                    router.push(result.redirectUrl);
+                  } else {
+                    toast.error(result.error);
+                  }
                 })();
               })
             }

@@ -12,7 +12,7 @@ export async function createProject(
   name: string,
   isPublic: boolean,
   language?: string | null,
-): Promise<{ error: string } | undefined> {
+): Promise<{ error: string } | { redirectUrl: string }> {
   const session = await auth();
 
   if (!session || !session.user) {
@@ -53,5 +53,6 @@ export async function createProject(
   }
 
   const data = await res.json();
-  redirect(`/projects/${data.id}`);
+
+  return { redirectUrl: `/projects/${data.id}` };
 }

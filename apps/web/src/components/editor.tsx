@@ -3,7 +3,8 @@
 import dynamic from "next/dynamic";
 import { HugeiconsIcon } from "@hugeicons/react";
 import { Cancel01Icon } from "@hugeicons/core-free-icons";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
+import { Button } from "@/shadcn/ui/button";
 
 const BACKEND_API_URL = process.env.BACKEND_API_URL || "http://localhost:3001";
 
@@ -11,7 +12,17 @@ const MonacoEditor = dynamic(() => import("@monaco-editor/react"), {
   ssr: false,
 });
 
-const openTabs = [{ name: "page.tsx", active: true }];
+type Tab = {
+  name: string;
+  active: boolean;
+};
+
+/* Testing tab
+{
+  name: "test.txt",
+  active: false,
+}
+*/
 
 export default function Editor({
   accessToken,
@@ -20,6 +31,13 @@ export default function Editor({
   accessToken?: string;
   projectId: string;
 }) {
+  const [openTabs, setOpenTabs] = useState<Tab[]>([
+    {
+      name: "test.txt",
+      active: false,
+    },
+  ]);
+
   useEffect(() => {
     const init = async () => {
       if (!accessToken) return;
@@ -48,29 +66,44 @@ export default function Editor({
     };
 
     init();
-  }, [accessToken]);
+  }, [accessToken, projectId]);
+
   return (
     <div className="flex h-full w-full flex-col">
-      <div className="flex items-center border-b bg-muted/80">
-        {openTabs.map((tab) => (
-          <div
-            key={tab.name}
-            className={`flex items-center gap-2 border-r px-3 py-1 text-xs ${
-              tab.active
-                ? "bg-accent text-foreground"
-                : "text-muted-foreground hover:bg-muted"
-            }`}
-          >
-            <span>{tab.name}</span>
-            <HugeiconsIcon
-              icon={Cancel01Icon}
-              strokeWidth={2}
-              className="size-3 opacity-60"
-            />
-          </div>
-        ))}
+      <div className="flex h-8 shrink-0 items-center border-b bg-muted/80 overflow-x-auto">
+        {" "}
+        {openTabs.length > 0 &&
+          openTabs.map((tab) => (
+            <div
+              key={tab.name}
+              className={`flex h-full shrink-0 items-center gap-2 border-r px-3 text-xs ${
+                tab.active
+                  ? "bg-accent text-foreground"
+                  : "text-muted-foreground hover:bg-muted"
+              }`}
+            >
+              <span>{tab.name}</span>
+              <Button
+                variant="ghost"
+                size="icon"
+                className="h-4 w-4 p-0 hover:bg-transparent"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setOpenTabs((tabs) =>
+                    tabs.filter((t) => t.name !== tab.name),
+                  );
+                }}
+              >
+                <HugeiconsIcon
+                  icon={Cancel01Icon}
+                  strokeWidth={2}
+                  className="size-3 opacity-60"
+                />
+              </Button>
+            </div>
+          ))}
       </div>
-      <div className="flex items-center border-b bg-accent px-3 py-0.5">
+      <div className="flex items-center shrink-0 border-b bg-accent px-3 py-0.5">
         <span className="text-xs text-muted-foreground">/file/placeholder</span>
       </div>
       <div className="flex-1">

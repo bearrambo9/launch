@@ -38,11 +38,12 @@ export function AppSidebar({ user, ...props }: AppSidebarProps) {
       className="top-(--header-height) h-[calc(100svh-var(--header-height))]!"
       {...props}
     >
-      <SidebarHeader className="border-b bg-muted/80 px-3 py-1">
+      <SidebarHeader className="h-8 border-b bg-muted/80 px-3 flex justify-center">
         <span className="text-[11px] font-bold uppercase tracking-wider text-muted-foreground">
           Explorer
         </span>
       </SidebarHeader>
+
       <SidebarContent>
         <SidebarGroupContent>
           <SidebarMenu>

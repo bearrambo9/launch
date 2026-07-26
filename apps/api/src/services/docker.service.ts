@@ -10,9 +10,8 @@ export async function initializeProjectContainer(
   let containerId = project.containerId;
 
   if (containerId) {
-    // Run it and unload it and stuff
-
-    console.log("Container exists");
+    const projectContainer = await docker.getContainer(containerId);
+    await projectContainer.start();
 
     return containerId;
   }

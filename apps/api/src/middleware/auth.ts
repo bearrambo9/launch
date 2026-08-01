@@ -31,6 +31,17 @@ export async function authenticateToken(
     return res.status(401).json({ error: "Malformed payload." });
   }
 
+  const uid = await verifyJwtToken(token);
+
+  if (!uid) {
+    return res.status(403).json({ error: "Invalid or expired token." });
+  }
+
+  req.user = uid;
+  next();
+}
+
+async function verifyJwtToken(token: string): Promise<string | null> {
   try {
     const secret = new TextEncoder().encode(INTERNAL_API_SECRET);
 
@@ -40,12 +51,11 @@ export async function authenticateToken(
     });
 
     if (!payload.uid || typeof payload.uid !== "string") {
-      return res.status(401).json({ error: "Invalid token payload." });
+      return null;
     }
 
-    req.user = payload.uid;
-    next();
+    return payload.uid;
   } catch (error) {
-    return res.status(403).json({ error: "Invalid or expired token." });
+    return null;
   }
 }

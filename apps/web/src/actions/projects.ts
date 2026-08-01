@@ -20,6 +20,7 @@ export async function createProject(
 
   const user = session.user;
   const error = validateProjectName(name);
+
   if (error) return { error: "Invalid project name" };
 
   const secret = await new TextEncoder().encode(INTERNAL_API_SECRET);

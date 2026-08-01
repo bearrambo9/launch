@@ -5,6 +5,7 @@ import { HugeiconsIcon } from "@hugeicons/react";
 import { Cancel01Icon } from "@hugeicons/core-free-icons";
 import { useEffect, useRef, useState } from "react";
 import { Button } from "@/shadcn/ui/button";
+import useWebSocket, { ReadyState } from "react-use-websocket";
 
 const BACKEND_API_URL = process.env.BACKEND_API_URL || "http://localhost:3001";
 
@@ -30,6 +31,7 @@ export default function Editor({
       active: false,
     },
   ]);
+  const [containerId, setContainerId] = useState<string | null>(null);
 
   const hasInitialized = useRef(false);
 
@@ -37,7 +39,7 @@ export default function Editor({
     if (hasInitialized.current) return;
     hasInitialized.current = true;
 
-    const init = async () => {
+    const initializeContainer = async () => {
       if (!accessToken) return;
 
       try {
@@ -57,19 +59,32 @@ export default function Editor({
 
         const data = await res.json();
 
-        console.log(data);
+        if (data.error || !data.containerId) {
+          console.log(data.error);
+
+          alert(
+            "There was an error when initializing the container. Please check the console",
+          );
+        }
+
+        setContainerId(data.containerId);
       } catch (error) {
         console.log(error);
       }
     };
 
-    init();
+    initializeContainer();
   }, [accessToken, projectId]);
+
+  const socketUrl = containerId
+    ? `ws://localhost:3001/terminal?containerId=${containerId}`
+    : null;
+
+  const { sendMessage, lastMessage } = useWebSocket(socketUrl);
 
   return (
     <div className="flex h-full w-full flex-col">
       <div className="flex h-8 shrink-0 items-center border-b bg-muted/80 overflow-x-auto">
-        {" "}
         {openTabs.length > 0 &&
           openTabs.map((tab) => (
             <div

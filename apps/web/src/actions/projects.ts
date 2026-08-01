@@ -3,7 +3,6 @@
 import { validateProjectName } from "@/lib/project-validation";
 import { auth } from "@/auth";
 import { SignJWT } from "jose";
-import { redirect } from "next/navigation";
 
 const INTERNAL_API_SECRET = process.env.INTERNAL_API_SECRET;
 const BACKEND_API_URL = process.env.BACKEND_API_URL || "http://localhost:3001";

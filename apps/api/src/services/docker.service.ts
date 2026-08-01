@@ -10,19 +10,33 @@ export async function initializeProjectContainer(
   let containerId = project.containerId;
 
   if (containerId) {
-    const projectContainer = await docker.getContainer(containerId);
-    await projectContainer.start();
+    const projectContainer = docker.getContainer(containerId);
+    const info = await projectContainer.inspect();
+
+    if (!info.State.Running) {
+      await projectContainer.start();
+    }
 
     return containerId;
   }
 
-  const projectContainer = await docker.createContainer({
-    Image: "launch-base:latest",
-    name: `project-${project.id}`,
-  });
+  const containerName = `project-${project.id}`;
 
-  await projectContainer.start();
-  containerId = projectContainer.id;
+  try {
+    const projectContainer = await docker.createContainer({
+      Image: "launch-base:latest",
+      name: containerName,
+    });
+
+    await projectContainer.start();
+    containerId = projectContainer.id;
+  } catch (error) {
+    if (isContainerNameConflict(error)) {
+      containerId = await resolveExistingContainer(containerName);
+    } else {
+      throw error;
+    }
+  }
 
   await prisma.project.update({
     where: { id: project.id },
@@ -30,4 +44,40 @@ export async function initializeProjectContainer(
   });
 
   return containerId;
+}
+
+function isContainerNameConflict(error: unknown): boolean {
+  return (
+    typeof error === "object" &&
+    error !== null &&
+    "statusCode" in error &&
+    (error as { statusCode: number }).statusCode === 409
+  );
+}
+
+async function resolveExistingContainer(
+  containerName: string,
+): Promise<string> {
+  const containers = await docker.listContainers({
+    all: true,
+    filters: { name: [containerName] },
+  });
+
+  const existingContainer = containers.find((container) =>
+    container.Names.includes(`/${containerName}`),
+  );
+
+  if (!existingContainer) {
+    throw new Error(
+      `Container name error for ${containerName} but no container with the same name was found.`,
+    );
+  }
+
+  const projectContainer = docker.getContainer(existingContainer.Id);
+
+  if (existingContainer.State !== "running") {
+    await projectContainer.start();
+  }
+
+  return existingContainer.Id;
 }

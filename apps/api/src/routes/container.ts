@@ -22,7 +22,7 @@ router.post("/initialize", async (req, res) => {
 
     return res.status(200).json({ success: true, containerId });
   } catch (error) {
-    console.log(error);
+    console.log(`Error when initializing container: ${error}`);
 
     return res.status(500).json({ error: "Failed to initialize environment." });
   }

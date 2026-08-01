@@ -3,7 +3,7 @@
 import dynamic from "next/dynamic";
 import { HugeiconsIcon } from "@hugeicons/react";
 import { Cancel01Icon } from "@hugeicons/core-free-icons";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Button } from "@/shadcn/ui/button";
 
 const BACKEND_API_URL = process.env.BACKEND_API_URL || "http://localhost:3001";
@@ -31,7 +31,12 @@ export default function Editor({
     },
   ]);
 
+  const hasInitialized = useRef(false);
+
   useEffect(() => {
+    if (hasInitialized.current) return;
+    hasInitialized.current = true;
+
     const init = async () => {
       if (!accessToken) return;
 

@@ -1,12 +1,40 @@
-export default function Page() {
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/shadcn/ui/table";
+import { prisma } from "@/lib/prisma";
+import { auth } from "@/auth";
+import { ProjectRow } from "@/components/project-row";
+
+export default async function Page() {
+  const session = await auth();
+  const projects = await prisma.project.findMany({
+    where: {
+      ownerId: session?.user.id,
+    },
+  });
+
   return (
-    <div className="flex flex-1 flex-col gap-4 p-4 pt-0">
-      <div className="grid auto-rows-min gap-4 md:grid-cols-3">
-        <div className="aspect-video rounded-xl bg-muted/50" />
-        <div className="aspect-video rounded-xl bg-muted/50" />
-        <div className="aspect-video rounded-xl bg-muted/50" />
-      </div>
-      <div className="min-h-screen flex-1 rounded-xl bg-muted/50 md:min-h-min" />
+    <div>
+      <h1 className="text-xl font-semibold">Your projects</h1>
+      <Table className="mt-4 text-sm">
+        <TableHeader>
+          <TableRow>
+            <TableHead>Project</TableHead>
+            <TableHead>Updated at</TableHead>
+            <TableHead>Public</TableHead>
+          </TableRow>
+        </TableHeader>
+        <TableBody>
+          {projects.map((project) => (
+            <ProjectRow key={project.id} project={project} />
+          ))}
+        </TableBody>
+      </Table>
     </div>
   );
 }

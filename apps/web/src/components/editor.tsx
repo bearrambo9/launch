@@ -7,6 +7,7 @@ import { useEffect, useRef, useState } from "react";
 import { Button } from "@/shadcn/ui/button";
 import useWebSocket, { ReadyState } from "react-use-websocket";
 
+const Terminal = dynamic(() => import("./terminal"), { ssr: false });
 const BACKEND_API_URL = process.env.BACKEND_API_URL || "http://localhost:3001";
 
 const MonacoEditor = dynamic(() => import("@monaco-editor/react"), {
@@ -77,13 +78,13 @@ export default function Editor({
   }, [accessToken, projectId]);
 
   const socketUrl = containerId
-    ? `ws://localhost:3001/terminal?containerId=${containerId}`
+    ? `ws://localhost:3001/terminal?containerId=${containerId}&token=${accessToken}`
     : null;
 
   const { sendMessage, lastMessage } = useWebSocket(socketUrl);
 
   return (
-    <div className="flex h-full w-full flex-col">
+    <div className="flex h-full min-h-0 w-full flex-col">
       <div className="flex h-8 shrink-0 items-center border-b bg-muted/80 overflow-x-auto">
         {openTabs.length > 0 &&
           openTabs.map((tab) => (
@@ -116,16 +117,34 @@ export default function Editor({
             </div>
           ))}
       </div>
-      <div className="flex items-center shrink-0 border-b bg-accent px-3 py-0.5">
+      <div className="flex items-center shrink-0 border-b bg-accent px-3">
         <span className="text-xs text-muted-foreground">/file/placeholder</span>
       </div>
-      <div className="flex-1">
+      <div className="flex-1 min-h-0">
         <MonacoEditor
           height="100%"
           defaultLanguage="typescript"
           defaultValue="// start typing"
           theme="vs"
         />
+      </div>
+      <div className="h-48 shrink-0 min-h-0 border-t bg-background flex flex-col">
+        <div className="flex h-6 shrink-0 items-center justify-between border-b px-2">
+          <span className="text-xs text-muted-foreground">Terminal</span>
+          <Button
+            variant="ghost"
+            size="icon"
+            className="h-4 w-4 p-0 hover:bg-transparent"
+            onClick={() => {}}
+          >
+            <HugeiconsIcon
+              icon={Cancel01Icon}
+              strokeWidth={2}
+              className="size-3 opacity-60"
+            />
+          </Button>
+        </div>
+        <Terminal socketUrl={socketUrl} />
       </div>
     </div>
   );

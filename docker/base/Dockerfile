@@ -11,4 +11,4 @@ RUN apt-get update && apt-get install -y \
 
 WORKDIR /workspace
 
-CMD ["/bin/bash"]
+CMD ["tail", "-f", "/dev/null"]

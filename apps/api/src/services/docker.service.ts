@@ -1,8 +1,46 @@
 import Docker from "dockerode";
 import { prisma } from "../lib/prisma.js";
 import type { Project } from "../generated/prisma/index.js";
+import { WebSocket } from "ws";
 
 const docker = new Docker();
+
+export async function handleTerminalConnection(ws: WebSocket) {
+  const userId = (ws as any).user;
+  const containerId = (ws as any).containerId;
+
+  try {
+    const terminalContainer = docker.getContainer(containerId);
+
+    const exec = await terminalContainer.exec({
+      Cmd: ["bash"],
+      AttachStdin: true,
+      AttachStdout: true,
+      AttachStderr: true,
+      Tty: true,
+    });
+
+    const stream = await exec.start({
+      hijack: true,
+      stdin: true,
+    });
+
+    stream.on("data", (chunk: Buffer) => {
+      ws.send(chunk.toString());
+    });
+
+    ws.on("message", (msg: string) => {
+      stream.write(msg);
+    });
+
+    ws.on("close", () => {
+      stream.end();
+    });
+  } catch (error) {
+    console.log(error);
+    ws.close();
+  }
+}
 
 export async function initializeProjectContainer(
   project: Project,

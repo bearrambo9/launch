@@ -1,4 +1,5 @@
 import type { Request, Response, NextFunction } from "express";
+import type { IncomingMessage } from "http";
 import { jwtVerify } from "jose";
 import dotenv from "dotenv";
 
@@ -39,6 +40,31 @@ export async function authenticateToken(
 
   req.user = uid;
   next();
+}
+
+export async function validateWebSocketUpgrade(
+  request: IncomingMessage,
+): Promise<{ uid: string; containerId: string } | null> {
+  if (!request.url) return null;
+
+  const parsedUrl = new URL(
+    request.url,
+    `http://${request.headers.host || "localhost"}`,
+  );
+  const token = parsedUrl.searchParams.get("token");
+  const containerId = parsedUrl.searchParams.get("containerId");
+
+  if (!token || !containerId) {
+    return null;
+  }
+
+  const uid = await verifyJwtToken(token);
+
+  if (!uid) {
+    return null;
+  }
+
+  return { uid, containerId };
 }
 
 async function verifyJwtToken(token: string): Promise<string | null> {

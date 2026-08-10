@@ -106,7 +106,7 @@ export function Auth({ className, ...props }: React.ComponentProps<"div">) {
                   id="email"
                   name="email"
                   type="email"
-                  placeholder="m@example.com"
+                  placeholder="cool.developer@school.edu"
                   required
                 />
               </Field>

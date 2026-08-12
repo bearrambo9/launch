@@ -16,19 +16,25 @@ const server = createServer(app);
 const wss = new WebSocketServer({ noServer: true });
 
 server.on("upgrade", async (request, socket, head) => {
-  const { pathname } = parse(request.url || "", true);
+  const { pathname, query } = parse(request.url || "", true);
   const authData = await validateWebSocketUpgrade(request);
 
   if (!authData) {
     socket.write("HTTP/1.1 401 Unauthorized\r\n\r\n");
     socket.destroy();
+
     return;
   }
 
   if (pathname === "/terminal") {
     wss.handleUpgrade(request, socket, head, (ws) => {
+      const rows = parseInt(query.rows as string, 10) || 24;
+      const cols = parseInt(query.cols as string, 10) || 80;
+
       (ws as any).user = authData.uid;
       (ws as any).containerId = authData.containerId;
+      (ws as any).rows = rows;
+      (ws as any).cols = cols;
 
       wss.emit("connection:terminal", ws, request);
     });
@@ -48,9 +54,6 @@ app.use(express.json());
 app.use("/projects", projectsRouter);
 
 wss.on("connection:terminal", (ws) => {
-  const userId = (ws as any).user;
-  const containerId = (ws as any).containerId;
-
   try {
     handleTerminalConnection(ws);
   } catch (error) {

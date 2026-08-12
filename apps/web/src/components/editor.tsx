@@ -52,9 +52,6 @@ export default function Editor({
               "content-type": "application/json",
               authorization: `Bearer ${accessToken}`,
             },
-            body: JSON.stringify({
-              projectId: projectId,
-            }),
           },
         );
 

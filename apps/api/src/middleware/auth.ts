@@ -44,13 +44,17 @@ export async function authenticateToken(
 
 export async function validateWebSocketUpgrade(
   request: IncomingMessage,
-): Promise<{ uid: string; containerId: string } | null> {
+): Promise<{
+  uid: string;
+  containerId: string;
+} | null> {
   if (!request.url) return null;
 
   const parsedUrl = new URL(
     request.url,
     `http://${request.headers.host || "localhost"}`,
   );
+
   const token = parsedUrl.searchParams.get("token");
   const containerId = parsedUrl.searchParams.get("containerId");
 

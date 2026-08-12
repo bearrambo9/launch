@@ -81,8 +81,6 @@ export default function Editor({
     ? `ws://localhost:3001/terminal?containerId=${containerId}&token=${accessToken}`
     : null;
 
-  const { sendMessage, lastMessage } = useWebSocket(socketUrl);
-
   return (
     <div className="flex h-full min-h-0 w-full flex-col">
       <div className="flex h-8 shrink-0 items-center border-b bg-muted/80 overflow-x-auto">

@@ -6,35 +6,75 @@ import { WebSocket } from "ws";
 const docker = new Docker();
 
 export async function handleTerminalConnection(ws: WebSocket) {
-  const userId = (ws as any).user;
   const containerId = (ws as any).containerId;
+  const rows = (ws as any).rows;
+  const cols = (ws as any).cols;
 
   try {
     const terminalContainer = docker.getContainer(containerId);
 
     const exec = await terminalContainer.exec({
-      Cmd: ["bash"],
+      Cmd: ["bash", "-i"],
       AttachStdin: true,
       AttachStdout: true,
       AttachStderr: true,
       Tty: true,
+      Env: ["TERM=xterm-256color"],
     });
 
     const stream = await exec.start({
       hijack: true,
       stdin: true,
+      Tty: true,
     });
+
+    async function handleTerminalResize(rows: number, cols: number) {
+      await exec.resize({
+        h: rows,
+        w: cols,
+      });
+    }
+
+    await handleTerminalResize(rows, cols);
 
     stream.on("data", (chunk: Buffer) => {
-      ws.send(chunk.toString());
+      if (ws.readyState === WebSocket.OPEN) {
+        ws.send(chunk, { binary: true });
+      }
     });
 
-    ws.on("message", (msg: string) => {
-      stream.write(msg);
+    ws.on("message", (data: Buffer, isBinary: boolean) => {
+      if (isBinary) {
+        stream.write(data);
+        return;
+      }
+
+      try {
+        const payload = JSON.parse(data.toString());
+        const event = payload.event;
+
+        switch (event) {
+          case "resize": {
+            const rows = payload.rows;
+            const cols = payload.cols;
+
+            if (rows && cols) handleTerminalResize(rows, cols);
+            break;
+          }
+        }
+      } catch (error) {
+        console.log(`Terminal error: ${error}`);
+      }
     });
 
     ws.on("close", () => {
       stream.end();
+      if (
+        "destroy" in stream &&
+        typeof (stream as any).destroy === "function"
+      ) {
+        (stream as any).destroy();
+      }
     });
   } catch (error) {
     console.log(error);
@@ -48,14 +88,22 @@ export async function initializeProjectContainer(
   let containerId = project.containerId;
 
   if (containerId) {
-    const projectContainer = docker.getContainer(containerId);
-    const info = await projectContainer.inspect();
+    try {
+      const projectContainer = docker.getContainer(containerId);
+      const info = await projectContainer.inspect();
 
-    if (!info.State.Running) {
-      await projectContainer.start();
+      if (!info.State.Running) {
+        await projectContainer.start();
+      }
+
+      return containerId;
+    } catch (error: any) {
+      if (error?.statusCode === 404) {
+        containerId = null;
+      } else {
+        throw error;
+      }
     }
-
-    return containerId;
   }
 
   const containerName = `project-${project.id}`;

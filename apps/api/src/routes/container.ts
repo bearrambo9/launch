@@ -5,13 +5,14 @@ import { initializeProjectContainer } from "../services/docker.service.js";
 const router: Router = Router({ mergeParams: true });
 
 router.post("/initialize", async (req, res) => {
-  const projectId = req.body.projectId;
+  const { id: projectId } = req.params as { id: string };
 
   if (!projectId) return res.status(400).json({ error: "No project ID." });
 
   const project = await prisma.project.findUnique({
     where: {
       id: projectId,
+      ownerId: req.user,
     },
   });
 

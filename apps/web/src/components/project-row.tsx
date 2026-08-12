@@ -1,5 +1,7 @@
 "use client";
 
+import { deleteProject } from "@/actions/projects";
+import { Button } from "@/shadcn/ui/button";
 import { TableRow, TableCell } from "@/shadcn/ui/table";
 import { useRouter } from "next/navigation";
 
@@ -21,6 +23,17 @@ export function ProjectRow({ project }: { project: Project }) {
       <TableCell className="font-medium">{project.name}</TableCell>
       <TableCell>{new Date(project.updatedAt).toLocaleDateString()}</TableCell>
       <TableCell>{project.public ? "True" : "False"}</TableCell>
+      <TableCell>
+        <Button
+          variant="destructive"
+          onClick={(e) => {
+            e.stopPropagation();
+            deleteProject(project.id);
+          }}
+        >
+          Delete
+        </Button>
+      </TableCell>
     </TableRow>
   );
 }

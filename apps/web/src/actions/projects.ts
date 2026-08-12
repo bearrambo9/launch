@@ -2,57 +2,87 @@
 
 import { validateProjectName } from "@/lib/project-validation";
 import { auth } from "@/auth";
-import { SignJWT } from "jose";
-
-const INTERNAL_API_SECRET = process.env.INTERNAL_API_SECRET;
-const BACKEND_API_URL = process.env.BACKEND_API_URL || "http://localhost:3001";
+import { prisma } from "@/lib/prisma";
+import { ProjectRole } from "@/prisma-client";
+import { revalidatePath } from "next/cache";
 
 export async function createProject(
   name: string,
   isPublic: boolean,
-  language?: string | null,
+  template?: string | null,
 ): Promise<{ error: string } | { redirectUrl: string }> {
   const session = await auth();
 
-  if (!session || !session.user) {
-    return { error: "Unauthorized, please log in." };
+  if (!session || !session.user || !session.user.id) {
+    return { error: "You are not authorized." };
   }
 
   const user = session.user;
-  const error = validateProjectName(name);
 
-  if (error) return { error: "Invalid project name" };
-
-  const secret = await new TextEncoder().encode(INTERNAL_API_SECRET);
-
-  const token = await new SignJWT({
-    sub: "launch-frontend",
-    iss: "launch-app",
-    aud: "api-service-layer",
-    uid: user.id,
-  })
-    .setProtectedHeader({ alg: "HS256" })
-    .setExpirationTime("1m")
-    .sign(secret);
-
-  const res = await fetch(`${BACKEND_API_URL}/projects`, {
-    method: "POST",
-    headers: {
-      "content-type": "application/json",
-      authorization: `Bearer ${token}`,
-    },
-    body: JSON.stringify({
-      name,
-      public: isPublic,
-      ...(language ? { language } : {}),
-    }),
-  });
-
-  if (!res.ok) {
-    return { error: "Failed to create project. Please try again." };
+  if (!name || typeof name !== "string" || typeof isPublic !== "boolean") {
+    return { error: "Project name and publicity are required." };
   }
 
-  const data = await res.json();
+  const nameError = validateProjectName(name);
 
-  return { redirectUrl: `/projects/${data.id}` };
+  if (nameError !== null) {
+    return { error: nameError };
+  }
+
+  try {
+    const project = await prisma.project.create({
+      data: {
+        name,
+        public: isPublic,
+        ...(template != null && { template }),
+        ownerId: user.id,
+        members: {
+          create: { userId: user.id, role: ProjectRole.OWNER },
+        },
+      },
+    });
+
+    revalidatePath("/dashboard/projects/");
+    return { redirectUrl: `/projects/${project.id}` };
+  } catch (error) {
+    return { error: "Failed to create project." };
+  }
+}
+
+export async function deleteProject(
+  id: string,
+): Promise<{ error: string } | { result: string }> {
+  const session = await auth();
+
+  if (!session || !session.user || !session.user.id) {
+    return { error: "You are not authorized." };
+  }
+
+  const user = session.user;
+
+  if (!id) return { error: "No project ID." };
+
+  const project = await prisma.project.findFirst({
+    where: {
+      id: id,
+      ownerId: user.id,
+    },
+  });
+
+  if (!project) return { error: "No project found." };
+
+  try {
+    const result = await prisma.project.delete({
+      where: {
+        id: project.id,
+      },
+    });
+
+    revalidatePath("/dashboard/projects/");
+
+    return { result: "success" };
+  } catch (error) {
+    console.log(error);
+    return { error: "Failed to delete project." };
+  }
 }

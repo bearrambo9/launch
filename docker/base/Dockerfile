@@ -7,7 +7,11 @@ RUN apt-get update && apt-get install -y \
     git \
     ca-certificates \
     build-essential \
+    ncurses-term \
     && rm -rf /var/lib/apt/lists/*
+    
+COPY bash.bashrc /etc/bash.bashrc
+COPY bash.bashrc /root/.bashrc   
 
 WORKDIR /workspace
 

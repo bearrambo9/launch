@@ -5,8 +5,15 @@ import * as dotenv from "dotenv";
 import { parse } from "url";
 import { createServer } from "http";
 import { WebSocketServer } from "ws";
-import { validateWebSocketUpgrade } from "./middleware/auth.js";
-import { handleTerminalConnection } from "./services/docker.service.js";
+import {
+  getOwnedProject,
+  validateWebSocketUpgrade,
+} from "./middleware/auth.js";
+import {
+  handleFilesConnection,
+  handleTerminalConnection,
+} from "./services/docker.service.js";
+import { prisma } from "./lib/prisma.js";
 
 dotenv.config();
 
@@ -27,16 +34,40 @@ server.on("upgrade", async (request, socket, head) => {
   }
 
   if (pathname === "/terminal") {
-    wss.handleUpgrade(request, socket, head, (ws) => {
+    wss.handleUpgrade(request, socket, head, async (ws) => {
       const rows = parseInt(query.rows as string, 10) || 24;
       const cols = parseInt(query.cols as string, 10) || 80;
 
-      (ws as any).user = authData.uid;
-      (ws as any).containerId = authData.containerId;
       (ws as any).rows = rows;
       (ws as any).cols = cols;
 
+      const projectId = query.projectId as string;
+      const project = await getOwnedProject(projectId, authData.uid);
+
+      if (!project) {
+        ws.close(4404, "Project not found");
+        return;
+      }
+
+      (ws as any).user = authData.uid;
+      (ws as any).containerId = project.containerId;
+
       wss.emit("connection:terminal", ws, request);
+    });
+  } else if (pathname === "/files") {
+    wss.handleUpgrade(request, socket, head, async (ws) => {
+      const projectId = query.projectId as string;
+      const project = await getOwnedProject(projectId, authData.uid);
+
+      if (!project) {
+        ws.close(4404, "Project not found");
+        return;
+      }
+
+      (ws as any).user = authData.uid;
+      (ws as any).projectId = project.id;
+
+      wss.emit("connection:files", ws, request);
     });
   }
 });
@@ -53,9 +84,18 @@ app.use(
 app.use(express.json());
 app.use("/projects", projectsRouter);
 
-wss.on("connection:terminal", (ws) => {
+wss.on("connection:terminal", async (ws) => {
   try {
-    handleTerminalConnection(ws);
+    await handleTerminalConnection(ws);
+  } catch (error) {
+    console.log(error);
+    ws.close();
+  }
+});
+
+wss.on("connection:files", async (ws) => {
+  try {
+    await handleFilesConnection(ws);
   } catch (error) {
     console.log(error);
     ws.close();

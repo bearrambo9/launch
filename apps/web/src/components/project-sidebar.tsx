@@ -1,13 +1,15 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { HugeiconsIcon } from "@hugeicons/react";
 import {
   ArrowRight01Icon,
   File01Icon,
   FileAddIcon,
   Folder01Icon,
+  Refresh01FreeIcons,
 } from "@hugeicons/core-free-icons";
+import { Tooltip, TooltipContent, TooltipTrigger } from "@/shadcn/ui/tooltip";
 import { NavUser } from "@/shadcn/nav-user";
 import { SessionUser } from "@/types/auth";
 import {
@@ -45,6 +47,7 @@ export function ProjectSidebar({ user, ...props }: ProjectSidebarProps) {
   const { projectId, accessToken, containerReady } = useProjectContext();
   const [fileTree, setFileTree] = useState<TreeItem[]>([]);
   const [loadingState, setLoadingState] = useState(false);
+  const websocketRef = useRef<WebSocket | null>(null);
 
   useEffect(() => {
     if (!containerReady) return;
@@ -54,6 +57,7 @@ export function ProjectSidebar({ user, ...props }: ProjectSidebarProps) {
 
     ws.onopen = () => {
       setLoadingState(true);
+      websocketRef.current = ws;
     };
 
     ws.onmessage = (event) => {
@@ -63,6 +67,8 @@ export function ProjectSidebar({ user, ...props }: ProjectSidebarProps) {
 
     return () => ws.close();
   }, [containerReady, projectId, accessToken]);
+
+  function refreshFiles() {}
 
   return (
     <Sidebar
@@ -74,16 +80,38 @@ export function ProjectSidebar({ user, ...props }: ProjectSidebarProps) {
           <span className="text-[11px] font-bold uppercase tracking-wider text-muted-foreground">
             Explorer
           </span>
-          <button
-            type="button"
-            className="text-muted-foreground hover:text-foreground transition-colors p-0.5 rounded hover:bg-accent  flex items-center justify-center"
-          >
-            <HugeiconsIcon
-              icon={FileAddIcon}
-              strokeWidth={2}
-              className="size-3.5"
-            />
-          </button>
+          <div className="flex gap-x-1">
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <button
+                  type="button"
+                  className="text-muted-foreground hover:text-foreground transition-colors p-0.5 rounded hover:bg-accent  flex items-center justify-center"
+                >
+                  <HugeiconsIcon
+                    icon={Refresh01FreeIcons}
+                    strokeWidth={2}
+                    className="size-3.5"
+                  />
+                </button>
+              </TooltipTrigger>
+              <TooltipContent>Refresh files</TooltipContent>
+            </Tooltip>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <button
+                  type="button"
+                  className="text-muted-foreground hover:text-foreground transition-colors p-0.5 rounded hover:bg-accent  flex items-center justify-center"
+                >
+                  <HugeiconsIcon
+                    icon={FileAddIcon}
+                    strokeWidth={2}
+                    className="size-3.5"
+                  />
+                </button>
+              </TooltipTrigger>
+              <TooltipContent>Create file</TooltipContent>
+            </Tooltip>
+          </div>
         </div>
       </SidebarHeader>
       <SidebarContent>

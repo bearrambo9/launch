@@ -3,9 +3,9 @@
 import dynamic from "next/dynamic";
 import { HugeiconsIcon } from "@hugeicons/react";
 import { Cancel01Icon } from "@hugeicons/core-free-icons";
-import { useEffect, useRef, useState } from "react";
+import { useState } from "react";
 import { Button } from "@/shadcn/ui/button";
-import useWebSocket, { ReadyState } from "react-use-websocket";
+import { useProjectContext } from "./project-provider";
 
 const Terminal = dynamic(() => import("./terminal"), { ssr: false });
 const BACKEND_API_URL = process.env.BACKEND_API_URL || "http://localhost:3001";
@@ -19,64 +19,16 @@ type Tab = {
   active: boolean;
 };
 
-export default function Editor({
-  accessToken,
-  projectId,
-}: {
-  accessToken?: string;
-  projectId: string;
-}) {
+export default function Editor() {
+  const { projectId, accessToken, containerReady } = useProjectContext();
   const [openTabs, setOpenTabs] = useState<Tab[]>([
     {
       name: "test.txt",
       active: false,
     },
   ]);
-  const [containerId, setContainerId] = useState<string | null>(null);
 
-  const hasInitialized = useRef(false);
-
-  useEffect(() => {
-    if (hasInitialized.current) return;
-    hasInitialized.current = true;
-
-    const initializeContainer = async () => {
-      if (!accessToken) return;
-
-      try {
-        const res = await fetch(
-          `${BACKEND_API_URL}/projects/${projectId}/container/initialize`,
-          {
-            method: "POST",
-            headers: {
-              "content-type": "application/json",
-              authorization: `Bearer ${accessToken}`,
-            },
-          },
-        );
-
-        const data = await res.json();
-
-        if (data.error || !data.containerId) {
-          console.log(data.error);
-
-          alert(
-            "There was an error when initializing the container. Please check the console",
-          );
-        }
-
-        setContainerId(data.containerId);
-      } catch (error) {
-        console.log(error);
-      }
-    };
-
-    initializeContainer();
-  }, [accessToken, projectId]);
-
-  const socketUrl = containerId
-    ? `ws://localhost:3001/terminal?containerId=${containerId}&token=${accessToken}`
-    : null;
+  const socketUrl = `ws://localhost:3001/terminal?token=${accessToken}&projectId=${projectId}`;
 
   return (
     <div className="flex h-full min-h-0 w-full flex-col">
@@ -139,7 +91,7 @@ export default function Editor({
             />
           </Button>
         </div>
-        <Terminal socketUrl={socketUrl} />
+        {containerReady && <Terminal socketUrl={socketUrl} />}
       </div>
     </div>
   );

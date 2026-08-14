@@ -4,26 +4,24 @@ import { useEffect } from "react";
 import { useXTerm } from "react-xtermjs";
 import { FitAddon } from "@xterm/addon-fit";
 
-interface Terminal {
-  socketUrl: string | null;
+interface TerminalProps {
+  socketUrl: string;
 }
 
-export default function Terminal({ socketUrl }: Terminal) {
+export default function Terminal({ socketUrl }: TerminalProps) {
   const { instance, ref: terminalRef } = useXTerm({
     options: { cursorBlink: true, convertEol: true },
   });
 
   useEffect(() => {
-    if (!instance || !socketUrl) return;
+    if (!instance) return;
 
     const fitAddon = new FitAddon();
     instance.loadAddon(fitAddon);
 
     fitAddon.fit();
 
-    let { rows, cols } = instance;
-
-    const ws = new WebSocket(`${socketUrl}&rows=${rows}&cols=${cols}`);
+    const ws = new WebSocket(socketUrl);
     ws.binaryType = "arraybuffer";
 
     const dataListener = instance.onData((data) => {

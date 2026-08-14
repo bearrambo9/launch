@@ -1,9 +1,63 @@
 import Docker from "dockerode";
+import path from "path";
+import chokidar from "chokidar";
+import * as fs from "fs/promises";
 import { prisma } from "../lib/prisma.js";
 import type { Project } from "../generated/prisma/index.js";
 import { WebSocket } from "ws";
 
 const docker = new Docker();
+
+type TreeItem = {
+  name: string;
+  isDir: boolean;
+  children?: TreeItem[];
+};
+
+async function buildTree(dir: string): Promise<TreeItem[]> {
+  const entries = await fs.readdir(dir, { withFileTypes: true });
+  const tree: TreeItem[] = [];
+
+  for (const entry of entries) {
+    if (entry.name.startsWith(".")) continue;
+
+    if (entry.isDirectory()) {
+      const children = await buildTree(path.join(dir, entry.name));
+      tree.push({ name: entry.name, isDir: true, children });
+    } else {
+      tree.push({ name: entry.name, isDir: false });
+    }
+  }
+
+  return tree;
+}
+
+export async function handleFilesConnection(ws: WebSocket) {
+  const projectId = (ws as any).projectId;
+  const projectPath = path.resolve("./data/projects", projectId);
+
+  async function sendTree() {
+    if (ws.readyState !== WebSocket.OPEN) return;
+    try {
+      const tree = await buildTree(projectPath);
+      ws.send(JSON.stringify({ tree }));
+    } catch (error) {
+      console.log("Failed to build file tree:", error);
+    }
+  }
+
+  await sendTree();
+
+  const watcher = chokidar.watch(projectPath, {
+    ignoreInitial: true,
+  });
+
+  watcher.on("all", () => sendTree());
+
+  ws.on("close", () => {
+    watcher.close();
+  });
+}
 
 export async function handleTerminalConnection(ws: WebSocket) {
   const containerId = (ws as any).containerId;
@@ -107,11 +161,17 @@ export async function initializeProjectContainer(
   }
 
   const containerName = `project-${project.id}`;
+  const projectPath = path.resolve("./data/projects", project.id);
 
   try {
+    await fs.mkdir(projectPath, { recursive: true });
+
     const projectContainer = await docker.createContainer({
       Image: "launch-base:latest",
       name: containerName,
+      HostConfig: {
+        Binds: [`${projectPath}:/workspace:Z`], // Read and write getting blocked by Fedora
+      },
     });
 
     await projectContainer.start();

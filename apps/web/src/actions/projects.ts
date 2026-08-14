@@ -45,6 +45,7 @@ export async function createProject(
     revalidatePath("/dashboard/projects/");
     return { redirectUrl: `/projects/${project.id}` };
   } catch (error) {
+    console.log(error);
     return { error: "Failed to create project." };
   }
 }

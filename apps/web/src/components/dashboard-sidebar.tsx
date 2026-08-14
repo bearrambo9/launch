@@ -173,6 +173,10 @@ export function AppSidebar({
             )}
           </Field>
 
+          {/*
+          Need to update prisma schema to have templates & make docker images, commenting out for now as it causes
+          an error
+
           <Field>
             <FieldLabel>Templates</FieldLabel>
             <div className="flex flex-wrap gap-1.5">
@@ -193,7 +197,7 @@ export function AppSidebar({
                 </button>
               ))}
             </div>
-          </Field>
+          </Field> */}
 
           <Field>
             <FieldLabel>Privacy</FieldLabel>
@@ -220,11 +224,7 @@ export function AppSidebar({
             onClick={() =>
               startTransition(() => {
                 (async () => {
-                  const result = await createProject(
-                    projectName,
-                    isPublic,
-                    template,
-                  );
+                  const result = await createProject(projectName, isPublic);
 
                   if ("redirectUrl" in result) {
                     router.push(result.redirectUrl);

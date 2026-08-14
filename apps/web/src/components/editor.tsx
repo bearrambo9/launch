@@ -61,12 +61,12 @@ export default function Editor() {
       </div>
       <div className="flex items-center shrink-0 border-b bg-accent px-3">
         <span className="text-xs text-muted-foreground">
-          /workspace/{openFile && openFile.path ? `${openFile.path}` : ""}
+          /{openFile && openFile.path ? `${openFile.path}` : ""}
         </span>
       </div>
       <div className="flex-1 min-h-0">
         <MonacoEditor
-          value={openFile?.data ?? "// Start writing some code!"}
+          value={openFile?.data ?? ""}
           path={openFile?.path}
           height="100%"
           defaultLanguage="typescript"

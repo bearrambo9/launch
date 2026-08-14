@@ -16,15 +16,22 @@ type TreeItem = {
 
 async function buildTree(dir: string): Promise<TreeItem[]> {
   const entries = await fs.readdir(dir, { withFileTypes: true });
-  const tree: TreeItem[] = [];
+  const tree: TreeItem[] = []; // Root: {}
 
   for (const entry of entries) {
     if (entry.name.startsWith(".")) continue;
 
     if (entry.isDirectory()) {
+      // if entry is a directory, recurse into it first to build its children
+      // and then push it as a node with those children attached
+
       const children = await buildTree(path.join(dir, entry.name));
       tree.push({ name: entry.name, isDir: true, children });
     } else {
+      /* If entry is not a directory, push it directly to tree {
+                                                                  {name: "test.txt",
+                                                                  isDir: false}
+      */
       tree.push({ name: entry.name, isDir: false });
     }
   }

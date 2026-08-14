@@ -8,7 +8,6 @@ import { Button } from "@/shadcn/ui/button";
 import { useProjectContext } from "./project-provider";
 
 const Terminal = dynamic(() => import("./terminal"), { ssr: false });
-const BACKEND_API_URL = process.env.BACKEND_API_URL || "http://localhost:3001";
 
 const MonacoEditor = dynamic(() => import("@monaco-editor/react"), {
   ssr: false,
@@ -20,13 +19,9 @@ type Tab = {
 };
 
 export default function Editor() {
-  const { projectId, accessToken, containerReady } = useProjectContext();
-  const [openTabs, setOpenTabs] = useState<Tab[]>([
-    {
-      name: "test.txt",
-      active: false,
-    },
-  ]);
+  const { projectId, accessToken, containerReady, openFile } =
+    useProjectContext();
+  const [openTabs, setOpenTabs] = useState<Tab[]>([]);
 
   const socketUrl = `ws://localhost:3001/terminal?token=${accessToken}&projectId=${projectId}`;
 
@@ -65,31 +60,22 @@ export default function Editor() {
           ))}
       </div>
       <div className="flex items-center shrink-0 border-b bg-accent px-3">
-        <span className="text-xs text-muted-foreground">/file/placeholder</span>
+        <span className="text-xs text-muted-foreground">
+          /workspace/{openFile && openFile.path ? `${openFile.path}` : ""}
+        </span>
       </div>
       <div className="flex-1 min-h-0">
         <MonacoEditor
+          value={openFile?.data ?? "// Start writing some code!"}
+          path={openFile?.path}
           height="100%"
           defaultLanguage="typescript"
-          defaultValue="// start typing"
           theme="vs"
         />
       </div>
       <div className="h-48 shrink-0 min-h-0 border-t bg-background flex flex-col">
-        <div className="flex h-6 shrink-0 items-center justify-between border-b px-2">
+        <div className="h-6 shrink-0 items-center justify-between border-b px-2">
           <span className="text-xs text-muted-foreground">Terminal</span>
-          <Button
-            variant="ghost"
-            size="icon"
-            className="h-4 w-4 p-0 hover:bg-transparent"
-            onClick={() => {}}
-          >
-            <HugeiconsIcon
-              icon={Cancel01Icon}
-              strokeWidth={2}
-              className="size-3 opacity-60"
-            />
-          </Button>
         </div>
         {containerReady && <Terminal socketUrl={socketUrl} />}
       </div>

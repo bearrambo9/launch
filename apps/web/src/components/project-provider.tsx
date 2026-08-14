@@ -4,10 +4,14 @@ import { createContext, useContext, useEffect, useRef, useState } from "react";
 
 const BACKEND_API_URL = process.env.BACKEND_API_URL || "http://localhost:3001";
 
+type OpenFile = { path: string; data: string };
+
 type ProjectContextValue = {
   projectId: string;
   accessToken: string;
   containerReady: boolean;
+  openFile: OpenFile | null;
+  setOpenFile: (file: OpenFile | null) => void;
 };
 
 const ProjectContext = createContext<ProjectContextValue | null>(null);
@@ -30,6 +34,7 @@ export function ProjectProvider({
   children: React.ReactNode;
 }) {
   const [containerReady, setContainerReady] = useState(false);
+  const [openFile, setOpenFile] = useState<OpenFile | null>(null);
   const hasInitialized = useRef(false);
 
   useEffect(() => {
@@ -66,7 +71,9 @@ export function ProjectProvider({
   }, [projectId, accessToken]);
 
   return (
-    <ProjectContext.Provider value={{ projectId, accessToken, containerReady }}>
+    <ProjectContext.Provider
+      value={{ projectId, accessToken, containerReady, openFile, setOpenFile }}
+    >
       {children}
     </ProjectContext.Provider>
   );

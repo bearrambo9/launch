@@ -10,11 +10,12 @@ const docker = new Docker();
 
 type TreeItem = {
   name: string;
+  path: string;
   isDir: boolean;
   children?: TreeItem[];
 };
 
-async function buildTree(dir: string): Promise<TreeItem[]> {
+async function buildTree(dir: string, root: string = dir): Promise<TreeItem[]> {
   const entries = await fs.readdir(dir, { withFileTypes: true });
   const tree: TreeItem[] = []; // Root: {}
 
@@ -25,14 +26,25 @@ async function buildTree(dir: string): Promise<TreeItem[]> {
       // if entry is a directory, recurse into it first to build its children
       // and then push it as a node with those children attached
 
-      const children = await buildTree(path.join(dir, entry.name));
-      tree.push({ name: entry.name, isDir: true, children });
+      const children = await buildTree(path.join(dir, entry.name), root);
+      tree.push({
+        name: entry.name,
+        isDir: true,
+        children,
+        path: path.relative(root, path.join(dir, entry.name)),
+      });
     } else {
       /* If entry is not a directory, push it directly to tree {
                                                                   {name: "test.txt",
                                                                   isDir: false}
+
+      idk why this was so confusing have to explain to myself to remember
       */
-      tree.push({ name: entry.name, isDir: false });
+      tree.push({
+        name: entry.name,
+        isDir: false,
+        path: path.relative(root, path.join(dir, entry.name)),
+      });
     }
   }
 

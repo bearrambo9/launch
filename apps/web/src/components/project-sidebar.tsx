@@ -5,6 +5,7 @@ import { HugeiconsIcon } from "@hugeicons/react";
 import {
   ArrowRight01Icon,
   File01Icon,
+  FileAddIcon,
   Folder01Icon,
 } from "@hugeicons/core-free-icons";
 import { NavUser } from "@/shadcn/nav-user";
@@ -27,6 +28,8 @@ import {
 } from "@/shadcn/ui/sidebar";
 import { useProjectContext } from "./project-provider";
 
+const BACKEND_API_URL = process.env.BACKEND_API_URL || "http://localhost:3001";
+
 interface ProjectSidebarProps extends React.ComponentProps<typeof Sidebar> {
   user: SessionUser;
 }
@@ -34,8 +37,10 @@ interface ProjectSidebarProps extends React.ComponentProps<typeof Sidebar> {
 type TreeItem = {
   name: string;
   isDir: boolean;
+  path: string;
   children?: TreeItem[];
 };
+
 export function ProjectSidebar({ user, ...props }: ProjectSidebarProps) {
   const { projectId, accessToken, containerReady } = useProjectContext();
   const [fileTree, setFileTree] = useState<TreeItem[]>([]);
@@ -65,11 +70,22 @@ export function ProjectSidebar({ user, ...props }: ProjectSidebarProps) {
       {...props}
     >
       <SidebarHeader className="h-8 border-b bg-muted/80 px-3 flex justify-center">
-        <span className="text-[11px] font-bold uppercase tracking-wider text-muted-foreground">
-          Explorer
-        </span>
+        <div className="flex w-full items-center justify-between">
+          <span className="text-[11px] font-bold uppercase tracking-wider text-muted-foreground">
+            Explorer
+          </span>
+          <button
+            type="button"
+            className="text-muted-foreground hover:text-foreground transition-colors p-0.5 rounded hover:bg-accent  flex items-center justify-center"
+          >
+            <HugeiconsIcon
+              icon={FileAddIcon}
+              strokeWidth={2}
+              className="size-3.5"
+            />
+          </button>
+        </div>
       </SidebarHeader>
-
       <SidebarContent>
         <SidebarGroupContent>
           <SidebarMenu>
@@ -104,38 +120,78 @@ export function ProjectSidebar({ user, ...props }: ProjectSidebarProps) {
   );
 }
 
+async function fetchFileData(
+  path: string,
+  projectId: string,
+  accessToken: string,
+  setOpenFile: (file: { path: string; data: string }) => void,
+): Promise<void> {
+  try {
+    const encodedPath = path.split("/").map(encodeURIComponent).join("/");
+
+    const res = await fetch(
+      `${BACKEND_API_URL}/projects/${projectId}/container/files/${encodedPath}`,
+      {
+        method: "GET",
+        headers: {
+          "content-type": "application/json",
+          authorization: `Bearer ${accessToken}`,
+        },
+      },
+    );
+
+    const data = await res.text();
+    setOpenFile({ path, data });
+  } catch (error) {
+    console.log(error);
+  }
+}
+
 function Tree({ item }: { item: TreeItem }) {
+  const { projectId, accessToken, setOpenFile } = useProjectContext();
+
   if (!item.isDir) {
     return (
-      <SidebarMenuButton className="h-7 text-sm data-[active=true]:bg-transparent">
-        <HugeiconsIcon icon={File01Icon} strokeWidth={2} className="size-4" />
-        {item.name}
-      </SidebarMenuButton>
+      <SidebarMenuItem>
+        <SidebarMenuButton
+          onClick={async () =>
+            await fetchFileData(item.path, projectId, accessToken, setOpenFile)
+          }
+          className="h-7 text-sm cursor-pointer"
+        >
+          <HugeiconsIcon
+            icon={File01Icon}
+            strokeWidth={2}
+            className="size-4 shrink-0"
+          />
+          <span className="truncate">{item.name}</span>
+        </SidebarMenuButton>
+      </SidebarMenuItem>
     );
   }
 
   return (
     <SidebarMenuItem>
-      <Collapsible className="group/collapsible [&[data-state=open]>button>svg:first-child]:rotate-90">
+      <Collapsible>
         <CollapsibleTrigger asChild>
-          <SidebarMenuButton className="h-7 text-sm">
+          <SidebarMenuButton className="h-7 text-sm cursor-pointer">
             <HugeiconsIcon
               icon={ArrowRight01Icon}
               strokeWidth={2}
-              className="size-4 transition-transform"
+              className="size-4 shrink-0"
             />
             <HugeiconsIcon
               icon={Folder01Icon}
               strokeWidth={2}
-              className="size-4"
+              className="size-4 shrink-0"
             />
-            {item.name}
+            <span className="truncate">{item.name}</span>
           </SidebarMenuButton>
         </CollapsibleTrigger>
         <CollapsibleContent>
           <SidebarMenuSub>
             {item.children?.map((child) => (
-              <Tree key={child.name} item={child} />
+              <Tree key={child.path || child.name} item={child} />
             ))}
           </SidebarMenuSub>
         </CollapsibleContent>

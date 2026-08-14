@@ -2,10 +2,20 @@ import type { Request, Response, NextFunction } from "express";
 import type { IncomingMessage } from "http";
 import { jwtVerify } from "jose";
 import dotenv from "dotenv";
+import { prisma } from "../lib/prisma.js";
 
 dotenv.config();
 
 const INTERNAL_API_SECRET = process.env.INTERNAL_API_SECRET;
+
+export async function getOwnedProject(projectId: string, uid: string) {
+  return prisma.project.findFirst({
+    where: {
+      id: projectId,
+      ownerId: uid,
+    },
+  });
+}
 
 export async function authenticateToken(
   req: Request,
@@ -41,13 +51,9 @@ export async function authenticateToken(
   req.user = uid;
   next();
 }
-
 export async function validateWebSocketUpgrade(
   request: IncomingMessage,
-): Promise<{
-  uid: string;
-  containerId: string;
-} | null> {
+): Promise<{ uid: string } | null> {
   if (!request.url) return null;
 
   const parsedUrl = new URL(
@@ -56,9 +62,8 @@ export async function validateWebSocketUpgrade(
   );
 
   const token = parsedUrl.searchParams.get("token");
-  const containerId = parsedUrl.searchParams.get("containerId");
 
-  if (!token || !containerId) {
+  if (!token) {
     return null;
   }
 
@@ -68,7 +73,7 @@ export async function validateWebSocketUpgrade(
     return null;
   }
 
-  return { uid, containerId };
+  return { uid };
 }
 
 async function verifyJwtToken(token: string): Promise<string | null> {

@@ -75,12 +75,10 @@ export async function handleFilesConnection(ws: WebSocket) {
     }
   }
 
-  async function createFile(name: string) {
-    const isDir = name.split(".")[1] === undefined;
+  async function createFile(name: string, isDir: boolean) {
     const targetPath = path.join(projectPath, name);
 
     try {
-      console.log(targetPath);
       await createProjectPath(targetPath, isDir);
     } catch (error: unknown) {
       if (error && typeof error === "object" && "code" in error)
@@ -106,7 +104,7 @@ export async function handleFilesConnection(ws: WebSocket) {
     if (msg.event === "refresh") {
       sendTree();
     } else if (msg.event === "create") {
-      createFile(msg.path);
+      createFile(msg.path, msg.isDir);
     }
   });
 

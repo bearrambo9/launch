@@ -7,6 +7,7 @@ import {
   File01Icon,
   FileAddIcon,
   Folder01Icon,
+  FolderAddIcon,
   Refresh01FreeIcons,
 } from "@hugeicons/core-free-icons";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/shadcn/ui/tooltip";
@@ -94,7 +95,7 @@ export function ProjectSidebar({ user, ...props }: ProjectSidebarProps) {
 
     if (websocketRef.current?.readyState === WebSocket.OPEN) {
       websocketRef.current.send(
-        JSON.stringify({ event: "create", path: name }),
+        JSON.stringify({ event: "create", path: name, isDir: draft?.isDir }),
       );
     }
   }
@@ -129,6 +130,22 @@ export function ProjectSidebar({ user, ...props }: ProjectSidebarProps) {
                 </button>
               </TooltipTrigger>
               <TooltipContent>Refresh files</TooltipContent>
+            </Tooltip>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <button
+                  type="button"
+                  onClick={() => setDraft({ parentPath: "", isDir: true })}
+                  className="text-muted-foreground hover:text-foreground transition-colors p-0.5 rounded hover:bg-accent flex items-center justify-center"
+                >
+                  <HugeiconsIcon
+                    icon={FolderAddIcon}
+                    strokeWidth={2}
+                    className="size-3.5"
+                  />
+                </button>
+              </TooltipTrigger>
+              <TooltipContent>Create folder</TooltipContent>
             </Tooltip>
             <Tooltip>
               <TooltipTrigger asChild>

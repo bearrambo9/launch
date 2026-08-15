@@ -73,6 +73,12 @@ export async function handleFilesConnection(ws: WebSocket) {
 
   watcher.on("all", () => sendTree());
 
+  ws.on("message", (data) => {
+    const msg = JSON.parse(data.toString());
+
+    if (msg.event === "refresh") sendTree();
+  });
+
   ws.on("close", () => {
     watcher.close();
   });

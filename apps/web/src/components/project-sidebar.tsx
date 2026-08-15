@@ -43,8 +43,14 @@ type TreeItem = {
   children?: TreeItem[];
 };
 
+type Draft = {
+  parentPath: string;
+  isDir: boolean;
+};
+
 export function ProjectSidebar({ user, ...props }: ProjectSidebarProps) {
   const { projectId, accessToken, containerReady } = useProjectContext();
+  const [draft, setDraft] = useState<Draft | null>(null);
   const [fileTree, setFileTree] = useState<TreeItem[]>([]);
   const [loadingState, setLoadingState] = useState(false);
   const websocketRef = useRef<WebSocket | null>(null);
@@ -62,13 +68,26 @@ export function ProjectSidebar({ user, ...props }: ProjectSidebarProps) {
 
     ws.onmessage = (event) => {
       const { tree } = JSON.parse(event.data);
+      console.log(tree);
       setFileTree(tree);
     };
 
     return () => ws.close();
   }, [containerReady, projectId, accessToken]);
 
-  function refreshFiles() {}
+  function refreshFiles() {
+    if (websocketRef.current?.readyState === WebSocket.OPEN) {
+      websocketRef.current.send(JSON.stringify({ event: "refresh" }));
+    }
+  }
+
+  function saveDraft(name: string) {
+    setDraft(null);
+  }
+
+  function cancelDraft() {
+    setDraft(null);
+  }
 
   return (
     <Sidebar
@@ -85,7 +104,8 @@ export function ProjectSidebar({ user, ...props }: ProjectSidebarProps) {
               <TooltipTrigger asChild>
                 <button
                   type="button"
-                  className="text-muted-foreground hover:text-foreground transition-colors p-0.5 rounded hover:bg-accent  flex items-center justify-center"
+                  onClick={refreshFiles}
+                  className="text-muted-foreground hover:text-foreground transition-colors p-0.5 rounded hover:bg-accent flex items-center justify-center"
                 >
                   <HugeiconsIcon
                     icon={Refresh01FreeIcons}
@@ -100,7 +120,8 @@ export function ProjectSidebar({ user, ...props }: ProjectSidebarProps) {
               <TooltipTrigger asChild>
                 <button
                   type="button"
-                  className="text-muted-foreground hover:text-foreground transition-colors p-0.5 rounded hover:bg-accent  flex items-center justify-center"
+                  onClick={() => setDraft({ parentPath: "", isDir: false })}
+                  className="text-muted-foreground hover:text-foreground transition-colors p-0.5 rounded hover:bg-accent flex items-center justify-center"
                 >
                   <HugeiconsIcon
                     icon={FileAddIcon}
@@ -119,14 +140,23 @@ export function ProjectSidebar({ user, ...props }: ProjectSidebarProps) {
           <SidebarMenu>
             {containerReady ? (
               loadingState ? (
-                fileTree.length === 0 ? (
+                fileTree.length === 0 && !draft ? (
                   <div className="px-3 py-1 text-xs text-muted-foreground">
                     No files yet
                   </div>
                 ) : (
-                  fileTree.map((item, index) => (
-                    <Tree key={index} item={item} />
-                  ))
+                  <>
+                    {fileTree.map((item) => (
+                      <Tree key={item.path} item={item} />
+                    ))}
+                    {draft?.parentPath === "" && (
+                      <DraftRow
+                        isDir={draft.isDir}
+                        saveDraft={saveDraft}
+                        cancelDraft={cancelDraft}
+                      />
+                    )}
+                  </>
                 )
               ) : (
                 <div className="px-3 py-1 text-xs text-muted-foreground">
@@ -173,6 +203,52 @@ async function fetchFileData(
   } catch (error) {
     console.log(error);
   }
+}
+
+function DraftRow({
+  isDir,
+  saveDraft,
+  cancelDraft,
+}: {
+  isDir: boolean;
+  saveDraft: (name: string) => void;
+  cancelDraft: () => void;
+}) {
+  const [name, setName] = useState("");
+  const settledRef = useRef(false);
+
+  return (
+    <SidebarMenuItem>
+      <div className="flex items-center gap-2 h-7 px-2">
+        <HugeiconsIcon
+          icon={isDir ? Folder01Icon : File01Icon}
+          strokeWidth={2}
+          className="size-4 shrink-0 text-muted-foreground"
+        />
+        <input
+          autoFocus
+          value={name}
+          onChange={(e) => setName(e.target.value)}
+          onKeyDown={(e) => {
+            if (e.key === "Enter") {
+              settledRef.current = true;
+              saveDraft(name.trim());
+            }
+            if (e.key === "Escape") {
+              settledRef.current = true;
+              cancelDraft();
+            }
+          }}
+          onBlur={() => {
+            if (settledRef.current) return;
+            settledRef.current = true;
+            name.trim() ? saveDraft(name.trim()) : cancelDraft();
+          }}
+          className="bg-transparent outline-none border border-secondary rounded px-1 text-sm w-full"
+        />
+      </div>
+    </SidebarMenuItem>
+  );
 }
 
 function Tree({ item }: { item: TreeItem }) {

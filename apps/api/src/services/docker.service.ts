@@ -48,7 +48,17 @@ async function buildTree(dir: string, root: string = dir): Promise<TreeItem[]> {
     }
   }
 
+  tree.sort((a, b) => Number(b.isDir) - Number(a.isDir));
+
   return tree;
+}
+
+async function createProjectPath(fullPath: string, isDir: boolean) {
+  if (isDir) {
+    await fs.mkdir(fullPath);
+  } else {
+    await fs.writeFile(fullPath, "", { flag: "wx" });
+  }
 }
 
 export async function handleFilesConnection(ws: WebSocket) {
@@ -65,6 +75,23 @@ export async function handleFilesConnection(ws: WebSocket) {
     }
   }
 
+  async function createFile(name: string) {
+    const isDir = name.split(".")[1] === undefined;
+    const targetPath = path.join(projectPath, name);
+
+    try {
+      console.log(targetPath);
+      await createProjectPath(targetPath, isDir);
+    } catch (error: unknown) {
+      if (error && typeof error === "object" && "code" in error)
+        if (error.code === "EEXIST") {
+          ws.send(JSON.stringify({ error: "This path already exists." }));
+        } else {
+          ws.send(JSON.stringify({ error: "Could not create file." }));
+        }
+    }
+  }
+
   await sendTree();
 
   const watcher = chokidar.watch(projectPath, {
@@ -76,7 +103,11 @@ export async function handleFilesConnection(ws: WebSocket) {
   ws.on("message", (data) => {
     const msg = JSON.parse(data.toString());
 
-    if (msg.event === "refresh") sendTree();
+    if (msg.event === "refresh") {
+      sendTree();
+    } else if (msg.event === "create") {
+      createFile(msg.path);
+    }
   });
 
   ws.on("close", () => {

@@ -29,6 +29,7 @@ import {
   SidebarMenuSub,
 } from "@/shadcn/ui/sidebar";
 import { useProjectContext } from "./project-provider";
+import { toast } from "sonner";
 
 const BACKEND_API_URL = process.env.BACKEND_API_URL || "http://localhost:3001";
 
@@ -67,8 +68,15 @@ export function ProjectSidebar({ user, ...props }: ProjectSidebarProps) {
     };
 
     ws.onmessage = (event) => {
-      const { tree } = JSON.parse(event.data);
-      console.log(tree);
+      const data = JSON.parse(event.data);
+
+      if (data.error) {
+        toast.error(data.error);
+        return;
+      }
+
+      const { tree } = data;
+
       setFileTree(tree);
     };
 
@@ -81,8 +89,14 @@ export function ProjectSidebar({ user, ...props }: ProjectSidebarProps) {
     }
   }
 
-  function saveDraft(name: string) {
+  function createFile(name: string) {
     setDraft(null);
+
+    if (websocketRef.current?.readyState === WebSocket.OPEN) {
+      websocketRef.current.send(
+        JSON.stringify({ event: "create", path: name }),
+      );
+    }
   }
 
   function cancelDraft() {
@@ -152,7 +166,7 @@ export function ProjectSidebar({ user, ...props }: ProjectSidebarProps) {
                     {draft?.parentPath === "" && (
                       <DraftRow
                         isDir={draft.isDir}
-                        saveDraft={saveDraft}
+                        createFile={createFile}
                         cancelDraft={cancelDraft}
                       />
                     )}
@@ -207,11 +221,11 @@ async function fetchFileData(
 
 function DraftRow({
   isDir,
-  saveDraft,
+  createFile,
   cancelDraft,
 }: {
   isDir: boolean;
-  saveDraft: (name: string) => void;
+  createFile: (name: string) => void;
   cancelDraft: () => void;
 }) {
   const [name, setName] = useState("");
@@ -232,7 +246,7 @@ function DraftRow({
           onKeyDown={(e) => {
             if (e.key === "Enter") {
               settledRef.current = true;
-              saveDraft(name.trim());
+              createFile(name.trim());
             }
             if (e.key === "Escape") {
               settledRef.current = true;
@@ -242,7 +256,7 @@ function DraftRow({
           onBlur={() => {
             if (settledRef.current) return;
             settledRef.current = true;
-            name.trim() ? saveDraft(name.trim()) : cancelDraft();
+            name.trim() ? createFile(name.trim()) : cancelDraft();
           }}
           className="bg-transparent outline-none border border-secondary rounded px-1 text-sm w-full"
         />

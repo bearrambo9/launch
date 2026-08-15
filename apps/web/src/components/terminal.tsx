@@ -21,7 +21,9 @@ export default function Terminal({ socketUrl }: TerminalProps) {
 
     fitAddon.fit();
 
-    const ws = new WebSocket(socketUrl);
+    const ws = new WebSocket(
+      `${socketUrl}&cols=${instance.cols}&rows=${instance.rows}`,
+    );
     ws.binaryType = "arraybuffer";
 
     const dataListener = instance.onData((data) => {

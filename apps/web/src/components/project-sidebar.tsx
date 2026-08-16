@@ -46,7 +46,7 @@ type TreeItem = {
 };
 
 type Draft = {
-  parentPath: string;
+  parentPath: string | null;
   isDir: boolean;
 };
 
@@ -54,6 +54,7 @@ export function ProjectSidebar({ user, ...props }: ProjectSidebarProps) {
   const { projectId, accessToken, containerReady } = useProjectContext();
   const [draft, setDraft] = useState<Draft | null>(null);
   const [fileTree, setFileTree] = useState<TreeItem[]>([]);
+  const [selectedPath, setSelectedPath] = useState<string | null>(null);
   const [loadingState, setLoadingState] = useState(false);
   const websocketRef = useRef<WebSocket | null>(null);
 
@@ -84,6 +85,12 @@ export function ProjectSidebar({ user, ...props }: ProjectSidebarProps) {
     return () => ws.close();
   }, [containerReady, projectId, accessToken]);
 
+  useEffect(() => {
+    if (selectedPath == null) return;
+
+    console.log(selectedPath);
+  }, [selectedPath]);
+
   function refreshFiles() {
     if (websocketRef.current?.readyState === WebSocket.OPEN) {
       websocketRef.current.send(JSON.stringify({ event: "refresh" }));
@@ -92,10 +99,15 @@ export function ProjectSidebar({ user, ...props }: ProjectSidebarProps) {
 
   function createFile(name: string) {
     setDraft(null);
+    console.log(selectedPath ? `${selectedPath}/${name}` : name);
 
     if (websocketRef.current?.readyState === WebSocket.OPEN) {
       websocketRef.current.send(
-        JSON.stringify({ event: "create", path: name, isDir: draft?.isDir }),
+        JSON.stringify({
+          event: "create",
+          path: selectedPath ? `${selectedPath}/${name}` : name,
+          isDir: draft?.isDir,
+        }),
       );
     }
   }
@@ -135,7 +147,9 @@ export function ProjectSidebar({ user, ...props }: ProjectSidebarProps) {
               <TooltipTrigger asChild>
                 <button
                   type="button"
-                  onClick={() => setDraft({ parentPath: "", isDir: true })}
+                  onClick={() =>
+                    setDraft({ parentPath: selectedPath, isDir: true })
+                  }
                   className="text-muted-foreground hover:text-foreground transition-colors p-0.5 rounded hover:bg-accent flex items-center justify-center"
                 >
                   <HugeiconsIcon
@@ -151,7 +165,9 @@ export function ProjectSidebar({ user, ...props }: ProjectSidebarProps) {
               <TooltipTrigger asChild>
                 <button
                   type="button"
-                  onClick={() => setDraft({ parentPath: "", isDir: false })}
+                  onClick={() =>
+                    setDraft({ parentPath: selectedPath, isDir: false })
+                  }
                   className="text-muted-foreground hover:text-foreground transition-colors p-0.5 rounded hover:bg-accent flex items-center justify-center"
                 >
                   <HugeiconsIcon
@@ -178,9 +194,16 @@ export function ProjectSidebar({ user, ...props }: ProjectSidebarProps) {
                 ) : (
                   <>
                     {fileTree.map((item) => (
-                      <Tree key={item.path} item={item} />
+                      <Tree
+                        key={item.path}
+                        item={item}
+                        setSelectedPath={setSelectedPath}
+                        draft={draft}
+                        createFile={createFile}
+                        cancelDraft={cancelDraft}
+                      />
                     ))}
-                    {draft?.parentPath === "" && (
+                    {draft?.parentPath === null && (
                       <DraftRow
                         isDir={draft.isDir}
                         createFile={createFile}
@@ -282,8 +305,25 @@ function DraftRow({
   );
 }
 
-function Tree({ item }: { item: TreeItem }) {
+function Tree({
+  item,
+  setSelectedPath,
+  draft,
+  createFile,
+  cancelDraft,
+}: {
+  item: TreeItem;
+  setSelectedPath: (path: string) => void;
+  draft: Draft | null;
+  createFile: (name: string) => void;
+  cancelDraft: () => void;
+}) {
   const { projectId, accessToken, setOpenFile } = useProjectContext();
+  const [isOpen, setIsOpen] = useState(false);
+
+  useEffect(() => {
+    if (draft?.parentPath === item.path) setIsOpen(true);
+  }, [draft, item.path]);
 
   if (!item.isDir) {
     return (
@@ -307,9 +347,12 @@ function Tree({ item }: { item: TreeItem }) {
 
   return (
     <SidebarMenuItem>
-      <Collapsible>
+      <Collapsible open={isOpen} onOpenChange={setIsOpen}>
         <CollapsibleTrigger asChild>
-          <SidebarMenuButton className="h-7 text-sm cursor-pointer">
+          <SidebarMenuButton
+            className="h-7 text-sm cursor-pointer"
+            onClick={() => setSelectedPath(item.path)}
+          >
             <HugeiconsIcon
               icon={ArrowRight01Icon}
               strokeWidth={2}
@@ -326,8 +369,22 @@ function Tree({ item }: { item: TreeItem }) {
         <CollapsibleContent>
           <SidebarMenuSub>
             {item.children?.map((child) => (
-              <Tree key={child.path || child.name} item={child} />
+              <Tree
+                key={child.path || child.name}
+                item={child}
+                setSelectedPath={setSelectedPath}
+                draft={draft}
+                createFile={createFile}
+                cancelDraft={cancelDraft}
+              />
             ))}
+            {draft?.parentPath === item.path && (
+              <DraftRow
+                isDir={draft.isDir}
+                createFile={createFile}
+                cancelDraft={cancelDraft}
+              />
+            )}
           </SidebarMenuSub>
         </CollapsibleContent>
       </Collapsible>

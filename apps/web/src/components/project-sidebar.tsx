@@ -85,12 +85,6 @@ export function ProjectSidebar({ user, ...props }: ProjectSidebarProps) {
     return () => ws.close();
   }, [containerReady, projectId, accessToken]);
 
-  useEffect(() => {
-    if (selectedPath == null) return;
-
-    console.log(selectedPath);
-  }, [selectedPath]);
-
   function refreshFiles() {
     if (websocketRef.current?.readyState === WebSocket.OPEN) {
       websocketRef.current.send(JSON.stringify({ event: "refresh" }));
@@ -99,7 +93,6 @@ export function ProjectSidebar({ user, ...props }: ProjectSidebarProps) {
 
   function createFile(name: string) {
     setDraft(null);
-    console.log(selectedPath ? `${selectedPath}/${name}` : name);
 
     if (websocketRef.current?.readyState === WebSocket.OPEN) {
       websocketRef.current.send(

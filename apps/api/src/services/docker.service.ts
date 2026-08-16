@@ -219,6 +219,7 @@ export async function initializeProjectContainer(
 
   try {
     await fs.mkdir(projectPath, { recursive: true });
+    await fs.chown(projectPath, process.getuid!(), process.getgid!());
 
     const projectContainer = await docker.createContainer({
       Image: "launch-base:latest",

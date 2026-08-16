@@ -6,6 +6,7 @@ import { Cancel01Icon } from "@hugeicons/core-free-icons";
 import { useState } from "react";
 import { Button } from "@/shadcn/ui/button";
 import { useProjectContext } from "./project-provider";
+import { useTheme } from "next-themes";
 
 const Terminal = dynamic(() => import("./terminal"), { ssr: false });
 
@@ -22,6 +23,9 @@ export default function Editor() {
   const { projectId, accessToken, containerReady, openFile } =
     useProjectContext();
   const [openTabs, setOpenTabs] = useState<Tab[]>([]);
+
+  const { theme, resolvedTheme } = useTheme();
+  const isDark = (theme === "system" ? resolvedTheme : theme) === "dark";
 
   const socketUrl = `ws://localhost:3001/terminal?token=${accessToken}&projectId=${projectId}`;
 
@@ -70,7 +74,10 @@ export default function Editor() {
           path={openFile?.path}
           height="100%"
           defaultLanguage="typescript"
-          theme="vs"
+          theme={isDark ? "vs-dark" : "vs"}
+          options={{
+            automaticLayout: true,
+          }}
         />
       </div>
       <div className="h-48 shrink-0 min-h-0 border-t bg-background flex flex-col">

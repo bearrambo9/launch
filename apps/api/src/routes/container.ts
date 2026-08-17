@@ -53,7 +53,12 @@ router.get("/files/*path", async (req, res) => {
   const projectRoot = path.resolve("./data/projects", project.id);
   const filePath = path.resolve(projectRoot, relativePath);
 
-  if (!filePath.startsWith(projectRoot)) {
+  if (
+    filePath !== projectRoot &&
+    !filePath.startsWith(projectRoot + path.sep)
+  ) {
+    /* This prevents people from inputting harmful paths that arent theirs
+    / but start with the project. like path, and path1 */
     return res.status(400).json({ error: "Invalid path." });
   }
 

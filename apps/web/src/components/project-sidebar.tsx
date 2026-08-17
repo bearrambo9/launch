@@ -3,10 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import { HugeiconsIcon } from "@hugeicons/react";
 import {
-  ArrowRight01Icon,
-  File01Icon,
   FileAddIcon,
-  Folder01Icon,
   FolderAddIcon,
   Refresh01FreeIcons,
 } from "@hugeicons/core-free-icons";
@@ -14,41 +11,22 @@ import { Tooltip, TooltipContent, TooltipTrigger } from "@/shadcn/ui/tooltip";
 import { NavUser } from "@/shadcn/nav-user";
 import { SessionUser } from "@/types/auth";
 import {
-  Collapsible,
-  CollapsibleContent,
-  CollapsibleTrigger,
-} from "@/shadcn/ui/collapsible";
-import {
   Sidebar,
   SidebarContent,
   SidebarFooter,
   SidebarGroupContent,
   SidebarHeader,
   SidebarMenu,
-  SidebarMenuButton,
-  SidebarMenuItem,
-  SidebarMenuSub,
 } from "@/shadcn/ui/sidebar";
 import { useProjectContext } from "./project-provider";
 import { toast } from "sonner";
-
-const BACKEND_API_URL = process.env.BACKEND_API_URL || "http://localhost:3001";
+import { DraftRow } from "./draft-row";
+import { Tree } from "./tree";
+import { Draft, TreeItem } from "@/types/explorer";
 
 interface ProjectSidebarProps extends React.ComponentProps<typeof Sidebar> {
   user: SessionUser;
 }
-
-type TreeItem = {
-  name: string;
-  isDir: boolean;
-  path: string;
-  children?: TreeItem[];
-};
-
-type Draft = {
-  parentPath: string | null;
-  isDir: boolean;
-};
 
 export function ProjectSidebar({ user, ...props }: ProjectSidebarProps) {
   const { projectId, accessToken, containerReady } = useProjectContext();
@@ -176,211 +154,54 @@ export function ProjectSidebar({ user, ...props }: ProjectSidebarProps) {
         </div>
       </SidebarHeader>
       <SidebarContent>
-        <SidebarGroupContent>
-          <SidebarMenu>
-            {containerReady ? (
-              loadingState ? (
-                fileTree.length === 0 && !draft ? (
-                  <div className="px-3 py-1 text-xs text-muted-foreground">
-                    No files yet
-                  </div>
+        <div className="flex flex-col min-h-full">
+          <SidebarGroupContent>
+            <SidebarMenu>
+              {containerReady ? (
+                loadingState ? (
+                  fileTree.length === 0 && !draft ? (
+                    <div className="px-3 py-1 text-xs text-muted-foreground">
+                      No files yet
+                    </div>
+                  ) : (
+                    <>
+                      {fileTree.map((item) => (
+                        <Tree
+                          key={item.path}
+                          item={item}
+                          setSelectedPath={setSelectedPath}
+                          draft={draft}
+                          createFile={createFile}
+                          cancelDraft={cancelDraft}
+                        />
+                      ))}
+                      {draft?.parentPath === null && (
+                        <DraftRow
+                          isDir={draft.isDir}
+                          createFile={createFile}
+                          cancelDraft={cancelDraft}
+                        />
+                      )}
+                    </>
+                  )
                 ) : (
-                  <>
-                    {fileTree.map((item) => (
-                      <Tree
-                        key={item.path}
-                        item={item}
-                        setSelectedPath={setSelectedPath}
-                        draft={draft}
-                        createFile={createFile}
-                        cancelDraft={cancelDraft}
-                      />
-                    ))}
-                    {draft?.parentPath === null && (
-                      <DraftRow
-                        isDir={draft.isDir}
-                        createFile={createFile}
-                        cancelDraft={cancelDraft}
-                      />
-                    )}
-                  </>
+                  <div className="px-3 py-1 text-xs text-muted-foreground">
+                    Loading files...
+                  </div>
                 )
               ) : (
                 <div className="px-3 py-1 text-xs text-muted-foreground">
-                  Loading files...
+                  Initializing container...
                 </div>
-              )
-            ) : (
-              <div className="px-3 py-1 text-xs text-muted-foreground">
-                Initializing container...
-              </div>
-            )}
-          </SidebarMenu>
-        </SidebarGroupContent>
+              )}
+            </SidebarMenu>
+          </SidebarGroupContent>
+          <div className="flex-1" onClick={() => setSelectedPath(null)} />
+        </div>
       </SidebarContent>
       <SidebarFooter>
         <NavUser user={user} />
       </SidebarFooter>
     </Sidebar>
-  );
-}
-
-async function fetchFileData(
-  path: string,
-  projectId: string,
-  accessToken: string,
-  setOpenFile: (file: { path: string; data: string }) => void,
-): Promise<void> {
-  try {
-    const encodedPath = path.split("/").map(encodeURIComponent).join("/");
-
-    const res = await fetch(
-      `${BACKEND_API_URL}/projects/${projectId}/container/files/${encodedPath}`,
-      {
-        method: "GET",
-        headers: {
-          "content-type": "application/json",
-          authorization: `Bearer ${accessToken}`,
-        },
-      },
-    );
-
-    const data = await res.text();
-    setOpenFile({ path, data });
-  } catch (error) {
-    console.log(error);
-  }
-}
-
-function DraftRow({
-  isDir,
-  createFile,
-  cancelDraft,
-}: {
-  isDir: boolean;
-  createFile: (name: string) => void;
-  cancelDraft: () => void;
-}) {
-  const [name, setName] = useState("");
-  const settledRef = useRef(false);
-
-  return (
-    <SidebarMenuItem>
-      <div className="flex items-center gap-2 h-7 px-2">
-        <HugeiconsIcon
-          icon={isDir ? Folder01Icon : File01Icon}
-          strokeWidth={2}
-          className="size-4 shrink-0 text-muted-foreground"
-        />
-        <input
-          autoFocus
-          value={name}
-          onChange={(e) => setName(e.target.value)}
-          onKeyDown={(e) => {
-            if (e.key === "Enter") {
-              settledRef.current = true;
-              createFile(name.trim());
-            }
-            if (e.key === "Escape") {
-              settledRef.current = true;
-              cancelDraft();
-            }
-          }}
-          onBlur={() => {
-            if (settledRef.current) return;
-            settledRef.current = true;
-            name.trim() ? createFile(name.trim()) : cancelDraft();
-          }}
-          className="bg-transparent outline-none border border-secondary rounded px-1 text-sm w-full"
-        />
-      </div>
-    </SidebarMenuItem>
-  );
-}
-
-function Tree({
-  item,
-  setSelectedPath,
-  draft,
-  createFile,
-  cancelDraft,
-}: {
-  item: TreeItem;
-  setSelectedPath: (path: string) => void;
-  draft: Draft | null;
-  createFile: (name: string) => void;
-  cancelDraft: () => void;
-}) {
-  const { projectId, accessToken, setOpenFile } = useProjectContext();
-  const [isOpen, setIsOpen] = useState(false);
-
-  useEffect(() => {
-    if (draft?.parentPath === item.path) setIsOpen(true);
-  }, [draft, item.path]);
-
-  if (!item.isDir) {
-    return (
-      <SidebarMenuItem>
-        <SidebarMenuButton
-          onClick={async () =>
-            await fetchFileData(item.path, projectId, accessToken, setOpenFile)
-          }
-          className="h-7 text-sm cursor-pointer"
-        >
-          <HugeiconsIcon
-            icon={File01Icon}
-            strokeWidth={2}
-            className="size-4 shrink-0"
-          />
-          <span className="truncate">{item.name}</span>
-        </SidebarMenuButton>
-      </SidebarMenuItem>
-    );
-  }
-
-  return (
-    <SidebarMenuItem>
-      <Collapsible open={isOpen} onOpenChange={setIsOpen}>
-        <CollapsibleTrigger asChild>
-          <SidebarMenuButton
-            className="h-7 text-sm cursor-pointer"
-            onClick={() => setSelectedPath(item.path)}
-          >
-            <HugeiconsIcon
-              icon={ArrowRight01Icon}
-              strokeWidth={2}
-              className="size-4 shrink-0"
-            />
-            <HugeiconsIcon
-              icon={Folder01Icon}
-              strokeWidth={2}
-              className="size-4 shrink-0"
-            />
-            <span className="truncate">{item.name}</span>
-          </SidebarMenuButton>
-        </CollapsibleTrigger>
-        <CollapsibleContent>
-          <SidebarMenuSub>
-            {item.children?.map((child) => (
-              <Tree
-                key={child.path || child.name}
-                item={child}
-                setSelectedPath={setSelectedPath}
-                draft={draft}
-                createFile={createFile}
-                cancelDraft={cancelDraft}
-              />
-            ))}
-            {draft?.parentPath === item.path && (
-              <DraftRow
-                isDir={draft.isDir}
-                createFile={createFile}
-                cancelDraft={cancelDraft}
-              />
-            )}
-          </SidebarMenuSub>
-        </CollapsibleContent>
-      </Collapsible>
-    </SidebarMenuItem>
   );
 }
